@@ -1,0 +1,44 @@
+name: verify-invoice
+description: 查看并校验已存在的发票（MIR4）
+
+params:
+  - name: invoice_number
+    type: string
+    required: true
+    description: 发票凭证号
+  - name: fiscal_year
+    type: string
+    description: 会计年度
+  - name: check_fields
+    type: array
+    default: ["供应商", "金额", "公司代码", "状态"]
+    description: 需要校验的字段列表
+
+steps:
+  - id: navigate
+    action: navigate_tcode
+    params:
+      tcode: MIR4
+
+  - id: fill_invoice_number
+    action: fill_fields
+    params:
+      fields:
+        发票凭证: "{{invoice_number}}"
+
+  - id: fill_fiscal_year
+    action: fill_fields
+    params:
+      fields:
+        会计年度: "{{fiscal_year}}"
+
+  - id: open
+    action: click_button
+    params:
+      button: 回车
+    on_error: screenshot_and_report
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: invoice-detail

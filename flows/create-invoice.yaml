@@ -1,0 +1,75 @@
+name: create-invoice
+description: 创建 SAP 采购发票（MIRO）
+
+params:
+  - name: vendor
+    type: string
+    required: true
+    description: 供应商编号
+  - name: amount
+    type: number
+    required: true
+    description: 发票总金额
+  - name: company_code
+    type: string
+    default: "1000"
+    description: 公司代码
+  - name: invoice_date
+    type: string
+    description: 发票日期（YYYY-MM-DD），默认今天
+  - name: reference
+    type: string
+    description: 参照号
+  - name: currency
+    type: string
+    default: "CNY"
+    description: 货币
+
+steps:
+  - id: navigate
+    action: navigate_tcode
+    params:
+      tcode: MIRO
+
+  - id: fill_company_code
+    action: fill_fields
+    params:
+      fields:
+        公司代码: "{{company_code}}"
+
+  - id: fill_vendor
+    action: fill_fields
+    params:
+      fields:
+        供应商: "{{vendor}}"
+    on_error: screenshot_and_report
+
+  - id: fill_amount
+    action: fill_fields
+    params:
+      fields:
+        金额: "{{amount}}"
+
+  - id: fill_date
+    action: fill_fields
+    params:
+      fields:
+        发票日期: "{{invoice_date}}"
+
+  - id: simulate
+    action: click_button
+    params:
+      button: 模拟
+    on_error: ai_diagnose
+
+  - id: post
+    action: click_button
+    params:
+      button: 过账
+    on_error: ai_diagnose
+
+  - id: capture_result
+    action: extract_text
+    params:
+      element: status_bar
+    output: document_number

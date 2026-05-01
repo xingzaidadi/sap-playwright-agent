@@ -1,0 +1,28 @@
+# SAP WebGUI 元素定位器配置
+# 根据实际页面结构调整
+
+frames:
+  # SAP WebGUI 的 iframe 层级（需实测确认）
+  main: "#_content"
+  work_area: "iframe[name*='webguimainbody']"
+
+common:
+  command_field: "#ToolbarOkCode"
+  enter_button: "#ToolbarOkCodeBtn"
+  status_bar: "#msgArea"
+
+toolbar:
+  save: "[title='保存']"
+  back: "[title='返回']"
+  exit: "[title='退出']"
+  simulate: "[title='模拟']"
+  post: "[title='过账']"
+
+# MIRO 事务特定定位器
+miro:
+  vendor: "//label[contains(text(),'供应商')]/following::input[1]"
+  invoice_date: "//label[contains(text(),'发票日期')]/following::input[1]"
+  amount: "//label[contains(text(),'金额')]/following::input[1]"
+  company_code: "//label[contains(text(),'公司代码')]/following::input[1]"
+  reference: "//label[contains(text(),'参照')]/following::input[1]"
+  item_table: "table.urST"
