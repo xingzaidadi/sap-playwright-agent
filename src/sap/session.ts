@@ -42,54 +42,64 @@ export class SAPSession {
 
     logger.info(`Navigating to SAP WebGUI: ${url}`)
     await this.page.goto(url)
-
-    // 填写登录表单（SAP WebGUI 登录页面结构）
-    // 注意：具体选择器需要根据实际 SAP 系统调整
     await this.page.waitForLoadState('networkidle')
 
-    // 尝试填写 client
-    const clientInput = this.page.locator(locators.byLabel('客户端')).or(
-      this.page.locator('input[name*="client" i]')
-    )
+    // 登录方式参考 ffa-test/SapLoginUtil.java（已验证可用）
+    // ECC/S4 使用 getByLabel，GTS 使用 ID 选择器
+    // 这里默认使用 getByLabel 方式（适用于 ECC/S4）
+
+    // 填写客户端
+    const clientInput = this.page.getByLabel('客户端', { exact: true })
     if (await clientInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await clientInput.click()
       await clientInput.fill(client)
     }
 
     // 填写用户名
-    const userInput = this.page.locator(locators.byLabel('用户')).or(
-      this.page.locator('input[name*="user" i]')
-    )
+    const userInput = this.page.getByLabel('用户', { exact: true })
+    await userInput.click()
     await userInput.fill(username)
+    await userInput.press('Tab')
 
     // 填写密码
-    const passInput = this.page.locator(locators.byLabel('密码')).or(
-      this.page.locator('input[type="password"]')
-    )
+    const passInput = this.page.getByLabel('密码', { exact: true })
     await passInput.fill(password)
 
-    // 填写语言（可选）
-    const langInput = this.page.locator(locators.byLabel('语言')).or(
-      this.page.locator('input[name*="lang" i]')
-    )
-    if (await langInput.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await langInput.fill(language)
-    }
-
-    // 点击登录
-    const loginBtn = this.page.locator(locators.byButtonText('登录')).or(
-      this.page.locator('input[type="submit"]')
-    )
-    await loginBtn.click()
+    // 点击登录按钮
+    await this.page.getByRole('button', { name: '登录' }).click()
 
     // 等待登录完成
     await this.page.waitForLoadState('networkidle')
     logger.success('SAP login successful')
   }
 
+  /**
+   * GTS 系统登录（使用 ID 选择器）
+   */
+  async loginGTS(): Promise<void> {
+    const { url, client, username, password } = this.config.sap
+
+    if (!username || !password) {
+      throw new Error('SAP credentials not configured.')
+    }
+
+    logger.info(`Navigating to SAP GTS: ${url}`)
+    await this.page.goto(url)
+    await this.page.waitForLoadState('networkidle')
+
+    await this.page.locator('#sap-client').fill(client)
+    await this.page.locator('#sap-user').fill(username)
+    await this.page.locator('#sap-password').fill(password)
+    await this.page.locator('#LOGON_BUTTON').click()
+
+    await this.page.waitForLoadState('networkidle')
+    logger.success('SAP GTS login successful')
+  }
+
   async isLoggedIn(): Promise<boolean> {
     try {
       // 检查是否存在命令字段（tcode 输入框），存在说明已登录
-      const cmdField = this.page.locator(locators.commandField)
+      const cmdField = this.page.getByRole('textbox', { name: '输入事务代码' })
       return await cmdField.isVisible({ timeout: 3000 })
     } catch {
       return false

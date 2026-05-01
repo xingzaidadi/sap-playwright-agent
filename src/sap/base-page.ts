@@ -52,13 +52,13 @@ export class SAPBasePage {
 
   /**
    * 导航到指定 tcode
+   * 参考 ffa-test CommonPO: page.getByRole(TEXTBOX, "输入事务代码").fill("/nxxx")
    */
   async goToTcode(tcode: string): Promise<void> {
     logger.info(`Navigating to tcode: ${tcode}`)
 
-    const cmdField = this.page.locator(locators.commandField)
+    const cmdField = this.page.getByRole('textbox', { name: '输入事务代码' })
     await cmdField.waitFor({ state: 'visible', timeout: 10000 })
-    await cmdField.click()
     await cmdField.fill(`/n${tcode}`)
     await cmdField.press('Enter')
 
@@ -69,11 +69,24 @@ export class SAPBasePage {
 
   /**
    * 通过标签文本填写字段
+   * 支持两种定位方式：getByLabel（精确匹配）和 title 属性
    */
   async fillByLabel(label: string, value: string): Promise<void> {
     logger.debug(`Filling field "${label}" with "${value}"`)
 
-    const input = this.locate(locators.byLabel(label))
+    // 优先用 getByLabel（参考 ffa-test 的方式）
+    let input = this.page.getByLabel(label, { exact: true })
+
+    // 如果 getByLabel 找不到，尝试 title 属性
+    if (!(await input.isVisible({ timeout: 3000 }).catch(() => false))) {
+      input = this.page.locator(`input[title='${label}']`)
+    }
+
+    // 还找不到，尝试 getByRole textbox
+    if (!(await input.isVisible({ timeout: 2000 }).catch(() => false))) {
+      input = this.page.getByRole('textbox', { name: label })
+    }
+
     await input.waitFor({ state: 'visible', timeout: 10000 })
     await input.click()
     await input.fill(value)

@@ -16,6 +16,7 @@ export interface InvoiceParams {
   amount: number
   companyCode?: string
   reference?: string
+  purchaseOrder?: string
   items: InvoiceItem[]
   currency?: string
 }
@@ -48,37 +49,40 @@ export class MIROPage extends SAPBasePage {
 
   /**
    * 填写发票抬头信息
+   * 定位器参考 ffa-test MiroPO.java 真实验证
    */
   async fillHeader(params: InvoiceParams): Promise<void> {
     logger.step('fill_header', 'Filling invoice header...')
 
-    // 填写公司代码
+    // 填写公司代码（getByRole textbox）
     if (params.companyCode) {
-      await this.fillByLabel('公司代码', params.companyCode)
+      const companyField = this.page.getByRole('textbox', { name: '公司代码' })
+      await companyField.fill(params.companyCode)
+      await this.page.keyboard.press('Enter')
     }
 
-    // 填写发票日期
+    // 填写发票日期（用 title 属性定位）
     if (params.invoiceDate) {
-      await this.fillByLabel('发票日期', params.invoiceDate)
+      const dateField = this.page.locator("input[title='凭证中的发票日期']")
+      await dateField.fill(params.invoiceDate)
+      await dateField.press('Enter')
     }
 
-    // 填写供应商
-    await this.fillByLabel('供应商', params.vendor)
-
-    // 填写参照号
-    if (params.reference) {
-      await this.fillByLabel('参照', params.reference)
+    // 填写采购凭证/供应商
+    if (params.purchaseOrder) {
+      const poField = this.page.getByRole('textbox', { name: '采购凭证' })
+      await poField.fill(params.purchaseOrder)
+      await poField.press('Enter')
+      // 等待系统加载采购凭证信息
+      await this.page.waitForLoadState('networkidle')
+      await this.page.waitForTimeout(2000)
     }
 
-    // 填写金额
-    await this.fillByLabel('金额', params.amount.toString())
+    // 填写金额（凭证货币金额）
+    const amountField = this.page.getByRole('textbox', { name: '凭证货币金额' })
+    await amountField.fill(params.amount.toString())
 
-    // 填写货币
-    if (params.currency) {
-      await this.fillByLabel('货币', params.currency)
-    }
-
-    // 处理可能出现的弹窗（如供应商确认等）
+    // 处理可能出现的弹窗
     await this.handlePopup()
 
     logger.step('fill_header', 'Header filled successfully')

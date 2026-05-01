@@ -1,11 +1,18 @@
 # SAP WebGUI 连接配置
+# 参考 ffa-test SapLoginUtil.java 中的真实地址
+
 sap:
-  url: "http://your-sap-server:8000/sap/bc/gui/sap/its/webgui"
-  client: "100"
+  # ECC Dev 环境
+  url: "https://midev.mioffice.cn:8443/sap/bc/gui/sap/its/webgui?sap-client=100&sap-language=ZH"
+  client: "110"
   language: "ZH"
-  # 认证信息建议通过环境变量传入
-  # username: 通过 SAP_USER 环境变量
-  # password: 通过 SAP_PASS 环境变量
+  # 认证信息通过环境变量传入: SAP_USER / SAP_PASS
+  # 可通过 MifyUtil.getAccountInfo("ecc", "64254") 获取
+
+  # 其他可用环境（通过 SAP_URL 环境变量切换）:
+  # GTS: https://migtd.mioffice.cn:8001/sap/bc/gui/sap/its/webgui?sap-client=100&sap-language=ZH
+  # S/4: https://mis4d.mioffice.cn/sap/bc/gui/sap/its/webgui?sap-client=130&sap-language=ZH
+  # SRM: https://mifrd.mioffice.cn:8001/portal?sap-client=100&sap-language=ZH#Shell-home
 
 browser:
   headless: false
