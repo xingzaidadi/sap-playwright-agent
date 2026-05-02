@@ -1,0 +1,52 @@
+name: release-po
+description: ME29N 释放/审批采购订单
+
+params:
+  - name: po_number
+    type: string
+    required: true
+    description: 采购订单号
+
+steps:
+  - id: navigate
+    action: navigate_tcode
+    params:
+      tcode: ME29N
+
+  - id: fill_po
+    action: fill_fields
+    params:
+      fields:
+        采购凭证: "{{po_number}}"
+
+  - id: press_enter
+    action: click_button
+    params:
+      button: Enter
+
+  - id: wait_load
+    action: wait
+    params:
+      ms: "2000"
+
+  - id: release
+    action: click_button
+    params:
+      button: 释放
+    on_error: ai_diagnose
+
+  - id: wait_release
+    action: wait
+    params:
+      ms: "2000"
+
+  - id: capture_result
+    action: extract_text
+    params:
+      element: status_bar
+    output: release_status
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: release-po-result

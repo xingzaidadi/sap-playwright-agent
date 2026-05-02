@@ -1,10 +1,12 @@
 import { readFileSync, readdirSync } from 'fs'
-import { resolve, basename } from 'path'
+import { resolve, basename, dirname } from 'path'
+import { fileURLToPath } from 'url'
 import { parse as parseYaml } from 'yaml'
 import { FlowDefinition } from './types.js'
 import { logger } from '../utils/logger.js'
 
-const FLOWS_DIR = resolve(process.cwd(), 'flows')
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const FLOWS_DIR = resolve(__dirname, '../../flows')
 
 /**
  * 加载单个 Flow 定义

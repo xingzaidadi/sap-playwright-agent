@@ -2,10 +2,10 @@ import { Page } from 'playwright'
 import { FlowDefinition, FlowStep, FlowResult, StepResult, FlowContext } from './types.js'
 import { loadFlow, validateParams } from './flow-loader.js'
 import { SAPBasePage } from '../sap/base-page.js'
-import { MIROPage } from '../sap/pages/miro-page.js'
-import { MIR4Page } from '../sap/pages/mir4-page.js'
 import { logger } from '../utils/logger.js'
 import { takeScreenshot } from '../utils/screenshot.js'
+import { aiFallback } from '../ai/fallback.js'
+import { ToolskitAPI } from '../utils/toolskit-api.js'
 
 /**
  * Flow 执行引擎
@@ -76,7 +76,7 @@ export class FlowRunner {
           duration: Date.now() - stepStart,
         })
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error)
+        let errorMsg = error instanceof Error ? error.message : String(error)
         const screenshot = await takeScreenshot(this.page, `error-${step.id}`)
         screenshots.push(screenshot)
 
@@ -94,6 +94,33 @@ export class FlowRunner {
           }
         }
 
+        if (step.on_error === 'ai_diagnose') {
+          logger.info(`Invoking AI fallback for step "${step.id}"...`)
+          try {
+            const decision = await aiFallback({
+              stepId: step.id,
+              action: step.action,
+              expectedState: `Step "${step.id}" should complete successfully`,
+              screenshotPath: screenshot,
+              errorMessage: errorMsg,
+            })
+
+            if (decision.action === 'retry') {
+              await this.executeStep(step)
+              stepResults.push({ stepId: step.id, success: true, duration: Date.now() - stepStart })
+              continue
+            } else if (decision.action === 'skip') {
+              logger.warn(`AI suggests skipping: ${decision.reason}`)
+              stepResults.push({ stepId: step.id, success: true, duration: Date.now() - stepStart })
+              continue
+            }
+            // abort or other — fall through to error handling
+            errorMsg = `AI: ${decision.reason}`
+          } catch {
+            // AI fallback itself failed, continue with normal error
+          }
+        }
+
         stepResults.push({
           stepId: step.id,
           success: false,
@@ -102,16 +129,19 @@ export class FlowRunner {
           duration: Date.now() - stepStart,
         })
 
-        if (step.on_error !== 'screenshot_and_report') {
-          return {
-            flowName,
-            success: false,
-            outputs: this.context.outputs,
-            steps: stepResults,
-            screenshots,
-            duration: Date.now() - startTime,
-            error: { step: step.id, message: errorMsg, screenshot },
-          }
+        if (step.on_error === 'screenshot_and_report') {
+          // 继续执行后续步骤
+          continue
+        }
+
+        return {
+          flowName,
+          success: false,
+          outputs: this.context.outputs,
+          steps: stepResults,
+          screenshots,
+          duration: Date.now() - startTime,
+          error: { step: step.id, message: errorMsg, screenshot },
         }
       }
     }
@@ -143,12 +173,15 @@ export class FlowRunner {
         await this.basePage.goToTcode(resolvedParams.tcode as string)
         return
 
-      case 'fill_fields':
+      case 'fill_fields': {
         const fields = resolvedParams.fields as Record<string, string>
         for (const [label, value] of Object.entries(fields)) {
-          await this.basePage.fillByLabel(label, value)
+          if (value) {
+            await this.basePage.fillByLabel(label, value)
+          }
         }
         return
+      }
 
       case 'fill_table_rows':
         // TODO: 实现表格填写
@@ -170,15 +203,122 @@ export class FlowRunner {
       case 'screenshot':
         return await takeScreenshot(this.page, resolvedParams.name as string || 'step')
 
+      case 'press_key':
+        await this.page.keyboard.press(resolvedParams.key as string || 'Enter')
+        await this.page.waitForLoadState('networkidle')
+        await this.page.waitForTimeout(500)
+        return
+
       case 'wait':
         const ms = parseInt(resolvedParams.ms as string || '1000')
         await this.page.waitForTimeout(ms)
         return
 
+      case 'navigate_url':
+        await this.page.goto(resolvedParams.url as string)
+        await this.page.waitForLoadState('networkidle')
+        return
+
+      case 'run_sub_flow': {
+        // 条件执行：condition 为"执行条件"，evaluate 为 false 时跳过
+        const condition = resolvedParams.condition as string
+        if (condition && !this.evaluateCondition(condition)) {
+          logger.info(`Skipping sub-flow (condition "${condition}" not met)`)
+          return
+        }
+        const subFlowName = resolvedParams.flow as string
+        const subParams = resolvedParams.params as Record<string, unknown> || {}
+        const subRunner = new FlowRunner(this.page)
+        const subResult = await subRunner.run(subFlowName, subParams)
+        if (!subResult.success) {
+          throw new Error(`Sub-flow "${subFlowName}" failed: ${subResult.error?.message}`)
+        }
+        return subResult.outputs
+      }
+
+      case 'api_call': {
+        const api = new ToolskitAPI()
+        const apiName = resolvedParams.api as string
+        const args = resolvedParams.args as Record<string, string> || {}
+
+        switch (apiName) {
+          case 'queryPODetails':
+            return await api.queryPODetails(args.po_number)
+          case 'bindSupplierRelation':
+            return await api.bindSupplierRelation(args.settlement_id, args.vendor_id)
+          case 'unbindSupplierRelation':
+            return await api.unbindSupplierRelation(args.settlement_id)
+          case 'queryExternalAgent':
+            return await api.queryExternalAgent(args.po_number)
+          default:
+            logger.warn(`Unknown API: ${apiName}`)
+            return
+        }
+      }
+
+      case 'srm_operation': {
+        const { SRMPage } = await import('../sap/pages/srm-page.js')
+        const srm = new SRMPage(this.page)
+        const op = resolvedParams.operation as string
+
+        switch (op) {
+          case 'uploadPOScan':
+            return await srm.uploadPOScan(
+              resolvedParams.vendor as string,
+              resolvedParams.po_number as string,
+              resolvedParams.file_path as string || ''
+            )
+          case 'createSettlement':
+            return await srm.createSettlement({
+              vendor: resolvedParams.vendor as string,
+              companyCode: resolvedParams.company_code as string,
+              purchasingOrg: resolvedParams.purchasing_org as string,
+              currency: resolvedParams.currency as string,
+              settlementDesc: resolvedParams.settlement_desc as string,
+              yearMonth: resolvedParams.year_month as string,
+              externalAgent: resolvedParams.external_agent as string,
+            })
+          case 'confirmAndGenerateInvoice':
+            return await srm.confirmAndGenerateInvoice({
+              settlementNumber: resolvedParams.settlement_number as string,
+              invoiceDate: resolvedParams.invoice_date as string,
+              postingDate: resolvedParams.posting_date as string,
+              baseDate: resolvedParams.base_date as string,
+              email: resolvedParams.email as string,
+            })
+          default:
+            logger.warn(`Unknown SRM operation: ${op}`)
+            return
+        }
+      }
+
       default:
         logger.warn(`Unknown action: ${step.action}`)
         return
     }
+  }
+
+  /**
+   * 简单条件求值（支持 == 和 != 比较）
+   */
+  private evaluateCondition(condition: string): boolean {
+    if (condition.includes('!=')) {
+      const [left, right] = condition.split('!=').map(s => s.trim())
+      const leftVal = this.resolveTemplateValue(left)
+      return leftVal !== right
+    }
+    if (condition.includes('==')) {
+      const [left, right] = condition.split('==').map(s => s.trim())
+      const leftVal = this.resolveTemplateValue(left)
+      return leftVal === right
+    }
+    return false
+  }
+
+  private resolveTemplateValue(val: string): string {
+    return val.replace(/\{\{(\w+)\}\}/g, (_, name) => {
+      return String(this.context.params[name] ?? this.context.outputs[name] ?? '')
+    })
   }
 
   /**

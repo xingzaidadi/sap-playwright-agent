@@ -1,12 +1,13 @@
 import { Browser, BrowserContext, Page, chromium } from 'playwright'
 import { AppConfig } from '../utils/config.js'
 import { logger } from '../utils/logger.js'
-import { locators } from './locators.js'
+import { fetchSAPCredentials } from '../utils/credentials.js'
 
 export class SAPSession {
   private browser: Browser | null = null
   private context: BrowserContext | null = null
   private _page: Page | null = null
+  private tracing = false
 
   constructor(private config: AppConfig) {}
 
@@ -22,8 +23,11 @@ export class SAPSession {
       slowMo: this.config.browser.slowMo,
     })
 
+    // userAgent 参考 ffa-test MiroTest.java（SAP 可能检测 UA）
     this.context = await this.browser.newContext({
       viewport: { width: 1920, height: 1080 },
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0',
+      ignoreHTTPSErrors: true,
     })
 
     this._page = await this.context.newPage()
@@ -33,12 +37,40 @@ export class SAPSession {
     return this._page
   }
 
-  async login(): Promise<void> {
-    const { url, client, language, username, password } = this.config.sap
-
-    if (!username || !password) {
-      throw new Error('SAP credentials not configured. Set SAP_USER and SAP_PASS environment variables.')
+  /**
+   * 开启 Playwright Tracing（录制所有操作、网络、截图）
+   * trace.zip 可以用 npx playwright show-trace trace.zip 查看
+   */
+  async startTracing(): Promise<void> {
+    if (this.context) {
+      await this.context.tracing.start({ screenshots: true, snapshots: true, sources: true })
+      this.tracing = true
+      logger.info('Tracing started')
     }
+  }
+
+  /**
+   * 停止 Tracing 并保存到文件
+   */
+  async stopTracing(outputPath?: string): Promise<string> {
+    const tracePath = outputPath || `screenshots/trace-${Date.now()}.zip`
+    if (this.context && this.tracing) {
+      await this.context.tracing.stop({ path: tracePath })
+      this.tracing = false
+      logger.info(`Trace saved: ${tracePath}`)
+    }
+    return tracePath
+  }
+
+  async login(): Promise<void> {
+    const { url, client } = this.config.sap
+
+    // 通过 Mify API 动态获取凭证（推荐方式）
+    logger.info('Fetching SAP credentials from Mify API...')
+    const creds = fetchSAPCredentials()
+    const username = creds.userName
+    const password = creds.password
+    logger.info(`Got credentials for user: ${username}`)
 
     logger.info(`Navigating to SAP WebGUI: ${url}`)
     await this.page.goto(url)
@@ -68,8 +100,19 @@ export class SAPSession {
     // 点击登录按钮
     await this.page.getByRole('button', { name: '登录' }).click()
 
-    // 等待登录完成
+    // 等待登录完成 — 验证 tcode 输入框出现（真正的成功标志）
     await this.page.waitForLoadState('networkidle')
+    const tcodeField = this.page.getByRole('textbox', { name: '输入事务代码' })
+    try {
+      await tcodeField.waitFor({ state: 'visible', timeout: 15000 })
+    } catch {
+      // 检查是否有错误消息
+      const errorMsg = await this.page.locator('.urMsgBarTxt, #msgBar').textContent().catch(() => '')
+      throw new Error(
+        `SAP login failed — tcode field not visible after 15s.` +
+        (errorMsg ? ` SAP message: "${errorMsg.trim()}"` : ' Check credentials or session limit.')
+      )
+    }
     logger.success('SAP login successful')
   }
 
@@ -77,11 +120,12 @@ export class SAPSession {
    * GTS 系统登录（使用 ID 选择器）
    */
   async loginGTS(): Promise<void> {
-    const { url, client, username, password } = this.config.sap
+    const { url, client } = this.config.sap
 
-    if (!username || !password) {
-      throw new Error('SAP credentials not configured.')
-    }
+    logger.info('Fetching SAP credentials from Mify API (GTS)...')
+    const creds = fetchSAPCredentials('gts')
+    const username = creds.userName
+    const password = creds.password
 
     logger.info(`Navigating to SAP GTS: ${url}`)
     await this.page.goto(url)

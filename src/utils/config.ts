@@ -1,13 +1,15 @@
 import { readFileSync } from 'fs'
 import { parse as parseYaml } from 'yaml'
-import { resolve } from 'path'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const PROJECT_ROOT = resolve(__dirname, '../..')
 
 export interface SAPConfig {
   url: string
   client: string
   language: string
-  username: string
-  password: string
 }
 
 export interface BrowserConfig {
@@ -16,13 +18,18 @@ export interface BrowserConfig {
   timeout: number
 }
 
+export interface SRMConfig {
+  baseUrl: string
+}
+
 export interface AppConfig {
   sap: SAPConfig
   browser: BrowserConfig
+  srm: SRMConfig
 }
 
 export function loadConfig(): AppConfig {
-  const configPath = resolve(process.cwd(), 'config/sap-connection.yaml')
+  const configPath = resolve(PROJECT_ROOT, 'config/sap-connection.yaml')
   const raw = readFileSync(configPath, 'utf-8')
   const yaml = parseYaml(raw)
 
@@ -31,13 +38,14 @@ export function loadConfig(): AppConfig {
       url: process.env.SAP_URL || yaml.sap.url,
       client: process.env.SAP_CLIENT || yaml.sap.client,
       language: process.env.SAP_LANG || yaml.sap.language,
-      username: process.env.SAP_USER || '',
-      password: process.env.SAP_PASS || '',
     },
     browser: {
       headless: yaml.browser?.headless ?? false,
       slowMo: yaml.browser?.slowMo ?? 100,
       timeout: yaml.browser?.timeout ?? 30000,
+    },
+    srm: {
+      baseUrl: process.env.SRM_BASE_URL || yaml.srm?.baseUrl || '',
     },
   }
 }

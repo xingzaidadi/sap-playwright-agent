@@ -1,0 +1,45 @@
+name: query-po-history
+description: ME2N 查询采购凭证列表/ME23N 查看PO历史
+
+params:
+  - name: po_number
+    type: string
+    required: true
+    description: 采购订单号
+  - name: mode
+    type: string
+    default: "display"
+    description: display=ME23N查看, list=ME2N列表
+
+steps:
+  - id: navigate
+    action: navigate_tcode
+    params:
+      tcode: ME23N
+
+  - id: fill_po
+    action: fill_fields
+    params:
+      fields:
+        采购凭证: "{{po_number}}"
+
+  - id: press_enter
+    action: press_key
+    params:
+      key: Enter
+
+  - id: wait_load
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: screenshot_overview
+    action: screenshot
+    params:
+      name: po-overview
+
+  - id: capture_status
+    action: extract_text
+    params:
+      element: status_bar
+    output: po_status

@@ -1,0 +1,95 @@
+name: srm-create-settlement
+description: SRM 创建结算对账单（Web Portal）
+
+params:
+  - name: vendor
+    type: string
+    required: true
+    description: 供应商编号（如 100071）
+  - name: company_code
+    type: string
+    default: "1110"
+    description: 公司代码
+  - name: purchasing_org
+    type: string
+    default: "1110"
+    description: 采购组织
+  - name: currency
+    type: string
+    default: "CNY"
+    description: 货币
+  - name: settlement_desc
+    type: string
+    default: "WH"
+    description: 对账单描述
+  - name: year_month
+    type: string
+    required: true
+    description: 年度月份（如 202509）
+  - name: external_agent
+    type: string
+    description: 外部代理（货币非CNY时需要填）
+
+steps:
+  - id: navigate_srm
+    action: navigate_url
+    params:
+      url: "SRM_SETTLEMENT_URL"
+
+  - id: fill_query
+    action: fill_fields
+    params:
+      fields:
+        供应商: "{{vendor}}"
+        公司代码: "{{company_code}}"
+        采购组织: "{{purchasing_org}}"
+        货币: "{{currency}}"
+
+  - id: query
+    action: click_button
+    params:
+      button: 查询
+
+  - id: wait_results
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: select_items
+    action: click_button
+    params:
+      button: 加总已选择项目
+
+  - id: create_settlement
+    action: click_button
+    params:
+      button: 创建对帐单
+
+  - id: fill_settlement_dialog
+    action: fill_fields
+    params:
+      fields:
+        对账单描述: "{{settlement_desc}}"
+        年度月份: "{{year_month}}"
+    on_error: ai_diagnose
+
+  - id: confirm_create
+    action: click_button
+    params:
+      button: 创建对帐单
+
+  - id: wait_create
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: capture_result
+    action: extract_text
+    params:
+      element: settlement_number
+    output: settlement_number
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: srm-settlement-created

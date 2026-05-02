@@ -1,0 +1,103 @@
+name: create-po
+description: ME21N 创建采购订单
+
+params:
+  - name: vendor
+    type: string
+    required: true
+    description: 供应商编号（如 100071）
+  - name: material
+    type: string
+    required: true
+    description: 物料编号（如 ZBW4041TW）
+  - name: quantity
+    type: number
+    required: true
+    description: 采购数量
+  - name: plant
+    type: string
+    required: true
+    description: 工厂（如 1112）
+  - name: storage_location
+    type: string
+    default: "F000"
+    description: 存储位置
+  - name: company_code
+    type: string
+    default: "1110"
+    description: 公司代码
+  - name: purchasing_org
+    type: string
+    default: "1110"
+    description: 采购组织
+  - name: purchasing_group
+    type: string
+    default: "2120"
+    description: 采购组
+  - name: order_type
+    type: string
+    default: "NB"
+    description: 订单类型（NB=标准采购订单, ZPJ=小米配件采购订单）
+  - name: currency
+    type: string
+    default: "CNY"
+    description: 货币
+
+steps:
+  - id: navigate
+    action: navigate_tcode
+    params:
+      tcode: ME21N
+
+  - id: set_order_type
+    action: fill_fields
+    params:
+      fields:
+        订单类型: "{{order_type}}"
+
+  - id: fill_vendor
+    action: fill_fields
+    params:
+      fields:
+        供应商: "{{vendor}}"
+    on_error: screenshot_and_report
+
+  - id: fill_purchasing_org
+    action: fill_fields
+    params:
+      fields:
+        采购组织: "{{purchasing_org}}"
+        采购组: "{{purchasing_group}}"
+        公司代码: "{{company_code}}"
+
+  - id: fill_item
+    action: fill_fields
+    params:
+      fields:
+        物料: "{{material}}"
+        采购订单数量: "{{quantity}}"
+        工厂: "{{plant}}"
+        存储位置: "{{storage_location}}"
+    on_error: ai_diagnose
+
+  - id: wait_price_load
+    action: wait
+    params:
+      ms: "2000"
+
+  - id: check_and_save
+    action: click_button
+    params:
+      button: 暂存
+    on_error: ai_diagnose
+
+  - id: capture_result
+    action: extract_text
+    params:
+      element: status_bar
+    output: po_number
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: create-po-result

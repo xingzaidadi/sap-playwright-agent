@@ -1,0 +1,72 @@
+name: goods-receipt
+description: MIGO 收货（移动类型 101）
+
+params:
+  - name: po_number
+    type: string
+    required: true
+    description: 采购订单号（如 4500201748）
+  - name: movement_type
+    type: string
+    default: "101"
+    description: 移动类型（101=收货）
+  - name: posting_date
+    type: string
+    description: 过账日期（YYYY/MM/DD），默认今天
+
+steps:
+  - id: navigate
+    action: navigate_tcode
+    params:
+      tcode: MIGO
+
+  - id: select_action
+    action: fill_fields
+    params:
+      fields:
+        操作类型: "A01 收货"
+        参考凭证类型: "R01 采购订单"
+
+  - id: fill_po
+    action: fill_fields
+    params:
+      fields:
+        采购订单号: "{{po_number}}"
+    on_error: screenshot_and_report
+
+  - id: press_enter
+    action: click_button
+    params:
+      button: Enter
+
+  - id: wait_data_load
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: check_items
+    action: screenshot
+    params:
+      name: migo-items-loaded
+
+  - id: post
+    action: click_button
+    params:
+      button: 过账
+    on_error: ai_diagnose
+
+  - id: wait_post
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: capture_result
+    action: extract_text
+    params:
+      element: status_bar
+    output: material_document
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: goods-receipt-result

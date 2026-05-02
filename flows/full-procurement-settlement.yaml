@@ -1,0 +1,171 @@
+name: full-procurement-settlement
+description: 完整采购→结算全流程（参考 流程.docx）
+
+# 流程概览（参考截图 image_24）:
+# 供应商侧: 1.创建结算对账单 → 3.维护结算对账单-匹配发票
+# 小米财务侧: 2.管理对账单-生成SAP暂估发票&对账单确认 → 4.发票审核与同步&发票确认
+#
+# 前置条件（SAP GUI）:
+# ME21N 创建PO → ME22 更改PO → ME29N 释放PO → MIGO 收货(101) → (可选) MIGO 退货(Y23)
+#
+# 结算流程（SRM Web）:
+# 上传PO扫描件 → 创建对账单 → 对账单确认 → 生成SAP暂估发票
+
+params:
+  - name: po_number
+    type: string
+    required: true
+    description: 采购订单号（如已有PO则直接用；无PO则先创建）
+  - name: vendor
+    type: string
+    required: true
+    description: 供应商编号
+  - name: company_code
+    type: string
+    default: "1110"
+  - name: purchasing_org
+    type: string
+    default: "1110"
+  - name: material
+    type: string
+    description: 物料编号（创建PO时需要）
+  - name: quantity
+    type: number
+    description: 采购数量（创建PO时需要）
+  - name: plant
+    type: string
+    default: "1112"
+  - name: currency
+    type: string
+    default: "CNY"
+  - name: settlement_desc
+    type: string
+    default: "WH"
+  - name: year_month
+    type: string
+    required: true
+    description: 结算年度月份（如 202509）
+  - name: skip_po_creation
+    type: boolean
+    default: true
+    description: 是否跳过PO创建（用已有PO）
+  - name: skip_receipt
+    type: boolean
+    default: true
+    description: 是否跳过收货（已收过货）
+  - name: include_return
+    type: boolean
+    default: false
+    description: 是否包含退货步骤
+  - name: return_quantity
+    type: number
+    description: 退货数量
+
+steps:
+  # ===== Phase 1: SAP GUI - 采购订单 =====
+  - id: create_po
+    action: run_sub_flow
+    params:
+      flow: create-po
+      condition: "{{skip_po_creation}} != true"
+      params:
+        vendor: "{{vendor}}"
+        material: "{{material}}"
+        quantity: "{{quantity}}"
+        plant: "{{plant}}"
+        company_code: "{{company_code}}"
+        purchasing_org: "{{purchasing_org}}"
+    output: po_number
+    on_error: screenshot_and_report
+
+  - id: release_po
+    action: run_sub_flow
+    params:
+      flow: release-po
+      condition: "{{skip_po_creation}} != true"
+      params:
+        po_number: "{{po_number}}"
+    on_error: screenshot_and_report
+
+  # ===== Phase 2: SAP GUI - 收货 =====
+  - id: goods_receipt
+    action: run_sub_flow
+    params:
+      flow: goods-receipt
+      condition: "{{skip_receipt}} != true"
+      params:
+        po_number: "{{po_number}}"
+    output: material_document
+    on_error: screenshot_and_report
+
+  # ===== Phase 3: SAP GUI - 退货（可选）=====
+  - id: goods_return
+    action: run_sub_flow
+    params:
+      flow: goods-return
+      condition: "{{include_return}} == true"
+      params:
+        po_number: "{{po_number}}"
+        return_quantity: "{{return_quantity}}"
+    output: return_document
+    on_error: screenshot_and_report
+
+  # ===== Phase 4: API 数据准备 =====
+  - id: query_po_details
+    action: api_call
+    params:
+      api: queryPODetails
+      args:
+        po_number: "{{po_number}}"
+    output: po_details
+
+  - id: bind_supplier
+    action: api_call
+    params:
+      api: bindSupplierRelation
+      args:
+        settlement_id: "{{settlement_id}}"
+        vendor_id: "{{vendor}}"
+    on_error: screenshot_and_report
+
+  # ===== Phase 5: SRM Web - 结算 =====
+  - id: upload_po_scan
+    action: srm_operation
+    params:
+      operation: uploadPOScan
+      vendor: "{{vendor}}"
+      po_number: "{{po_number}}"
+    on_error: screenshot_and_report
+
+  - id: create_settlement
+    action: srm_operation
+    params:
+      operation: createSettlement
+      vendor: "{{vendor}}"
+      company_code: "{{company_code}}"
+      purchasing_org: "{{purchasing_org}}"
+      currency: "{{currency}}"
+      settlement_desc: "{{settlement_desc}}"
+      year_month: "{{year_month}}"
+    output: settlement_number
+    on_error: ai_diagnose
+
+  - id: confirm_and_invoice
+    action: srm_operation
+    params:
+      operation: confirmAndGenerateInvoice
+      settlement_number: "{{settlement_number}}"
+    output: sap_invoice_number
+    on_error: ai_diagnose
+
+  # ===== Phase 6: 验证 =====
+  - id: verify_result
+    action: screenshot
+    params:
+      name: full-flow-complete
+
+  - id: capture_final
+    action: extract_text
+    params:
+      element: status_bar
+    output: final_status

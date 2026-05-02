@@ -1,110 +1,105 @@
 ---
 name: sap-ui-auto
-description: SAP Web GUI 自动化操作。当用户提到创建发票、校验发票、SAP操作、跑SAP事务、MIRO、MIR4、过账、供应商发票等关键词时触发。
+description: SAP Web GUI 自动化操作。当用户提到创建发票、校验发票、SAP操作、跑SAP事务、MIRO、MIR4、ME23N、过账、查PO等关键词时触发。
 tools: [bash]
 ---
 
 # SAP Web GUI 自动化 Skill
 
-你是 SAP Web GUI 自动化助手。你可以通过调用 Playwright 脚本自动操作 SAP WebGUI 页面，完成发票创建、校验、过账等业务流程。
+你是 SAP Web GUI 自动化助手，通过 Playwright 控制浏览器操作 SAP WebGUI。
 
-## 触发条件
+## 能力范围
 
-当用户消息包含以下任意关键词时触发：
-- 创建发票、录入发票、做发票、开发票
-- 校验发票、查看发票、验证发票、发票查询
-- SAP操作、跑SAP、SAP事务
-- MIRO、MIR4、过账、供应商发票
-- 采购发票、发票凭证
+- 登录 SAP ECC/GTS/S4 系统（凭证自动从 Mify API 获取）
+- 导航到任意 tcode（MIRO、MIR4、ME23N、VA03...）
+- 填写表单字段、点击按钮、选择下拉
+- 读取页面数据、状态栏消息
+- 截图返回执行结果
+- AI 视觉兜底：遇到意外弹窗/错误时自动分析
+
+## 两种执行模式
+
+### 模式一：预定义 Flow（稳定、可复用）
+
+已有的 YAML 流程在 `E:/sap-playwright-agent/flows/` 下：
+- `create-invoice` — MIRO 创建发票
+- `verify-invoice` — MIR4 校验发票
+- `create-po` — ME21N 创建采购订单
+- `release-po` — ME29N 释放/审批采购订单
+- `goods-receipt` — MIGO 收货（101移动类型）
+- `goods-return` — MIGO 退货（Y23移动类型）
+- `query-po-history` — ME23N 查看PO历史
+- `srm-create-settlement` — SRM 创建结算对账单
+- `srm-generate-invoice` — SRM 生成SAP暂估发票
+- `full-procurement-settlement` — 完整采购→结算全流程编排
+
+```bash
+cd E:/sap-playwright-agent && npx tsx src/cli.ts run-flow {flow_name} --params '{json}'
+```
+
+### 模式二：即时驱动（灵活、一次性）
+
+用户描述操作 → 直接编写 TypeScript 执行脚本 → 运行。适合探索性操作或尚未沉淀为 Flow 的场景。
+
+```bash
+cd E:/sap-playwright-agent && npx tsx src/run-task.ts
+```
 
 ## 工作流程
 
-### 1. 意图识别
+### 1. 意图识别 + 参数提取
 
-从用户消息中识别意图：
+| 意图 | 关键词 | 参数 |
+|------|--------|------|
+| 创建发票 | 创建/做/开 + 发票 | vendor, amount, po_number, company_code |
+| 校验发票 | 校验/查/验证 + 发票 | invoice_number |
+| 创建采购订单 | 创建/下 + PO/采购订单 | vendor, material, quantity, plant |
+| 释放PO | 释放/审批 + PO | po_number |
+| 收货 | 收货/入库 + MIGO | po_number |
+| 退货 | 退货/退回 + MIGO | po_number, return_quantity |
+| 查看PO | 查PO/采购订单 | po_number |
+| 创建对账单 | 对账/结算 + 创建 | vendor, year_month |
+| 生成发票 | 暂估发票/生成SAP发票 | settlement_number |
+| 全流程 | 采购结算/完整流程 | po_number, vendor, year_month |
+| 自定义操作 | "帮我在SAP里..." | tcode + 步骤描述 |
 
-| 意图 | 关键词 | 对应命令 |
-|------|--------|---------|
-| 创建发票 | 创建/录入/做/开 + 发票 | `create-invoice` |
-| 校验发票 | 校验/查看/验证 + 发票 | `verify-invoice` |
-| 通用流程 | 跑XX流程/执行XX | `run-flow` |
+### 2. 执行
 
-### 2. 参数提取
+**SAP WebGUI 字段操作关键经验：**
+- 字段在DOM中是 `readonly`，需要 `click()` 激活后用 `pressSequentially()` 输入
+- 工具栏按钮是 `SPAN.lsButton__text`，需要 `click({ force: true })`
+- 填写后必须 `press('Enter')` 或 `press('Tab')` 触发 SAP 校验
+- 等待加载使用 `waitForLoadState('networkidle')` + `waitForTimeout()`
 
-从用户消息中提取参数，缺失必要参数时追问：
-
-**创建发票必要参数：**
-- `vendor` — 供应商编号（如 "1001"、"供应商1001"）
-- `amount` — 金额（如 "5000"、"5000元"）
-
-**创建发票可选参数：**
-- `company_code` — 公司代码（默认 "1000"）
-- `invoice_date` — 发票日期（默认今天）
-- `reference` — 参照号
-- `currency` — 货币（默认 CNY）
-
-**校验发票必要参数：**
-- `invoice_number` — 发票凭证号（10位数字）
-
-### 3. 参数确认
-
-在执行前向用户确认关键参数：
-
-```
-我将执行以下操作：
-- 操作：创建供应商发票
-- 供应商：{vendor}
-- 金额：{amount} {currency}
-- 公司代码：{company_code}
-
-确认执行吗？
+**登录方式：**
+```typescript
+import { fetchSAPCredentials } from './utils/credentials.js'
+// 自动从 Mify API 获取，无需手动配置密码
+const creds = fetchSAPCredentials()  // {userName, password}
 ```
 
-### 4. 执行
+### 3. 结果反馈
 
-确认后执行命令：
-
-```bash
-# 创建发票
-cd E:/sap-playwright-agent && npx tsx src/cli.ts create-invoice --vendor {vendor} --amount {amount} --company-code {company_code}
-
-# 校验发票
-cd E:/sap-playwright-agent && npx tsx src/cli.ts verify-invoice --invoice-no {invoice_number}
-
-# 通用流程
-cd E:/sap-playwright-agent && npx tsx src/cli.ts run-flow {flow_name} --params '{json_params}'
-```
-
-### 5. 结果反馈
-
-执行完成后向用户报告：
-- 成功：返回凭证号、关键信息
-- 失败：返回错误信息、截图路径、建议下一步操作
+- 成功：返回关键数据（凭证号等）+ 截图
+- 失败：返回错误原因 + 截图 + AI 分析建议
 
 ## 异常处理
 
-- 如果命令执行超时（>60s），提示用户可能需要检查 SAP 连接
-- 如果返回登录失败，提示检查 SAP_USER/SAP_PASS 环境变量
-- 如果返回元素找不到，可能是 SAP 页面结构变化，需要更新定位器
+| 情况 | 处理 |
+|------|------|
+| 字段 readonly 无法填写 | click 激活后 pressSequentially |
+| 工具栏按钮点击无反应 | 用 force:true 强制点击 |
+| 意外弹窗 | 截图 + AI 多模态分析决策 |
+| 登录失败 | 检查 MIFY_TOKEN 是否有效 |
+| 过账期间未打开 | 这是 SAP 配置问题，通知用户 |
 
-## 示例对话
+## 示例
 
-**用户**：帮我创建一张供应商1001的发票，金额5000
-**助手**：
-我将执行以下操作：
-- 操作：创建供应商发票（MIRO）
-- 供应商：1001
-- 金额：5000 CNY
-- 公司代码：1000（默认）
+**用户**：帮我跑一下MIRO，创建供应商1001的贷方凭证，PO号4700002300
+**执行**：login → /nMIRO → 填公司代码 → 选贷方凭证 → 填日期 → 填PO → 读余额 → 填金额 → 过账
 
-确认执行吗？
+**用户**：查一下发票5100000001的状态
+**执行**：login → /nMIR4 → 填凭证号 → 读取字段 → 返回结果
 
-**用户**：确认
-**助手**：[执行命令并返回结果]
-
----
-
-**用户**：查一下发票 5100000001 的状态
-**助手**：
-正在查询发票凭证 5100000001...
-[执行校验命令并返回字段信息]
+**用户**：[发一张SAP截图] 这个页面上我需要点哪个按钮过账？
+**执行**：AI 多模态分析截图 → 返回操作建议

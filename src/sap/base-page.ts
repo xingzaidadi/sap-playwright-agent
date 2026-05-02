@@ -3,6 +3,9 @@ import { locators } from './locators.js'
 import { logger } from '../utils/logger.js'
 import { takeScreenshot } from '../utils/screenshot.js'
 
+// re-export for subclasses
+export { locators }
+
 export interface PopupInfo {
   type: 'confirm' | 'error' | 'info' | 'unknown'
   message: string
@@ -69,45 +72,45 @@ export class SAPBasePage {
 
   /**
    * 通过标签文本填写字段
-   * 支持两种定位方式：getByLabel（精确匹配）和 title 属性
+   * SAP WebGUI 字段在 DOM 中通常是 readonly，需要先 click 激活
    */
   async fillByLabel(label: string, value: string): Promise<void> {
     logger.debug(`Filling field "${label}" with "${value}"`)
 
-    // 优先用 getByLabel（参考 ffa-test 的方式）
-    let input = this.page.getByLabel(label, { exact: true })
+    // 定位策略：getByRole textbox → title属性 → getByLabel
+    let input = this.page.getByRole('textbox', { name: label })
 
-    // 如果 getByLabel 找不到，尝试 title 属性
-    if (!(await input.isVisible({ timeout: 3000 }).catch(() => false))) {
+    if (!(await input.isVisible({ timeout: 2000 }).catch(() => false))) {
       input = this.page.locator(`input[title='${label}']`)
     }
 
-    // 还找不到，尝试 getByRole textbox
     if (!(await input.isVisible({ timeout: 2000 }).catch(() => false))) {
-      input = this.page.getByRole('textbox', { name: label })
+      input = this.page.getByLabel(label, { exact: true })
     }
 
     await input.waitFor({ state: 'visible', timeout: 10000 })
+    // SAP 字段需要 click 激活 → Ctrl+A 选中全部 → 输入覆盖（bypass readonly）
     await input.click()
-    await input.fill(value)
-    // 模拟 Tab 离开字段，触发 SAP 校验
+    await this.page.waitForTimeout(200)
+    await this.page.keyboard.press('Control+a')
+    await this.page.waitForTimeout(100)
+    await input.pressSequentially(value, { delay: 30 })
     await input.press('Tab')
-
-    // 短暂等待 SAP 响应
     await this.page.waitForTimeout(500)
   }
 
   /**
-   * 点击工具栏按钮（通过 title 属性）
+   * 点击工具栏按钮
+   * SAP WebGUI 按钮是 SPAN.lsButton__text，需要 force:true 因为外层 wrapper 遮挡
    */
   async clickToolbarButton(title: string): Promise<void> {
     logger.debug(`Clicking toolbar button: "${title}"`)
 
-    const btn = this.page.locator(locators.byTitle(title))
-    await btn.waitFor({ state: 'visible', timeout: 10000 })
-    await btn.click()
-
+    // SAP WebGUI buttons: getByText finds the SPAN, force click bypasses actionability
+    const btn = this.page.getByText(title, { exact: true })
+    await btn.first().click({ force: true })
     await this.page.waitForLoadState('networkidle')
+    await this.page.waitForTimeout(500)
   }
 
   /**
@@ -152,12 +155,18 @@ export class SAPBasePage {
   }
 
   /**
-   * 获取状态栏消息
+   * 获取状态栏消息（SAP WebGUI 底部状态条）
    */
   async getStatusMessage(): Promise<string> {
+    // SAP WebGUI 状态栏通常在页面底部，包含错误/成功消息
     const statusBar = this.page.locator(locators.statusBar)
-    if (await statusBar.isVisible({ timeout: 2000 }).catch(() => false)) {
-      return await statusBar.textContent() || ''
+    if (await statusBar.first().isVisible({ timeout: 2000 }).catch(() => false)) {
+      return await statusBar.first().textContent() || ''
+    }
+    // fallback: 查找任何可见的错误/成功消息文字
+    const msgBox = this.page.locator('.lsMessageBarPop__text, .urMsgBarTxt')
+    if (await msgBox.first().isVisible({ timeout: 1000 }).catch(() => false)) {
+      return await msgBox.first().textContent() || ''
     }
     return ''
   }

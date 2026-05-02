@@ -50,42 +50,84 @@ export class MIROPage extends SAPBasePage {
   /**
    * 填写发票抬头信息
    * 定位器参考 ffa-test MiroPO.java 真实验证
+   *
+   * SAP WebGUI 字段在 DOM 中是 readonly，需要 click 激活后 pressSequentially 输入
    */
   async fillHeader(params: InvoiceParams): Promise<void> {
     logger.step('fill_header', 'Filling invoice header...')
 
-    // 填写公司代码（getByRole textbox）
+    // 填写公司代码
     if (params.companyCode) {
-      const companyField = this.page.getByRole('textbox', { name: '公司代码' })
-      await companyField.fill(params.companyCode)
+      await this.sapFill(
+        this.page.getByRole('textbox', { name: '公司代码' }),
+        params.companyCode
+      )
       await this.page.keyboard.press('Enter')
-    }
-
-    // 填写发票日期（用 title 属性定位）
-    if (params.invoiceDate) {
-      const dateField = this.page.locator("input[title='凭证中的发票日期']")
-      await dateField.fill(params.invoiceDate)
-      await dateField.press('Enter')
-    }
-
-    // 填写采购凭证/供应商
-    if (params.purchaseOrder) {
-      const poField = this.page.getByRole('textbox', { name: '采购凭证' })
-      await poField.fill(params.purchaseOrder)
-      await poField.press('Enter')
-      // 等待系统加载采购凭证信息
       await this.page.waitForLoadState('networkidle')
-      await this.page.waitForTimeout(2000)
+      await this.page.waitForTimeout(1000)
     }
 
-    // 填写金额（凭证货币金额）
-    const amountField = this.page.getByRole('textbox', { name: '凭证货币金额' })
-    await amountField.fill(params.amount.toString())
+    // 选择贷方凭证类型（如果需要）
+    // 参考 MiroPO: page.locator("#M0\\:46\\:\\:\\:0\\:17-btn").click()
+    const typeDropdown = this.page.locator('#M0\\:46\\:\\:\\:0\\:17-btn')
+    if (await typeDropdown.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await typeDropdown.click()
+      await this.page.waitForTimeout(500)
+      await this.page.getByText('贷方凭证').click()
+      await this.page.waitForTimeout(500)
+    }
 
-    // 处理可能出现的弹窗
+    // 填写发票日期
+    if (params.invoiceDate) {
+      await this.sapFill(
+        this.page.locator("input[title='凭证中的发票日期']"),
+        params.invoiceDate
+      )
+      await this.page.locator("input[title='凭证中的发票日期']").press('Enter')
+    }
+
+    // 填写采购凭证
+    if (params.purchaseOrder) {
+      await this.sapFill(
+        this.page.getByRole('textbox', { name: '采购凭证' }),
+        params.purchaseOrder
+      )
+      await this.page.getByRole('textbox', { name: '采购凭证' }).press('Enter')
+      await this.page.waitForLoadState('networkidle')
+      await this.page.waitForTimeout(3000)
+    }
+
+    // 读取凭证余额（PO 加载后）
+    const balanceField = this.page.locator("input[title='凭证余额']")
+    const balance = await balanceField.inputValue().catch(() => '0')
+    const absAmount = balance.replace('-', '').trim()
+
+    // 填写金额
+    if (params.amount > 0) {
+      await this.sapFill(
+        this.page.getByRole('textbox', { name: '凭证货币金额' }),
+        params.amount.toString()
+      )
+    } else if (absAmount && absAmount !== '0' && absAmount !== '0.00') {
+      // 自动使用余额作为金额
+      await this.sapFill(
+        this.page.getByRole('textbox', { name: '凭证货币金额' }),
+        absAmount
+      )
+    }
+
     await this.handlePopup()
-
     logger.step('fill_header', 'Header filled successfully')
+  }
+
+  /**
+   * SAP 字段填写：click 激活 → pressSequentially 输入
+   * 绕过 SAP WebGUI readonly DOM 属性
+   */
+  private async sapFill(locator: import('playwright').Locator, value: string): Promise<void> {
+    await locator.click()
+    await this.page.waitForTimeout(200)
+    await locator.pressSequentially(value, { delay: 30 })
   }
 
   /**
@@ -129,6 +171,7 @@ export class MIROPage extends SAPBasePage {
 
   /**
    * 模拟过账（检查是否有错误）
+   * 参考截图：工具栏中"模拟"是一个菜单链接
    */
   async simulate(): Promise<{ success: boolean; message: string }> {
     logger.step('simulate', 'Running simulation...')
@@ -136,7 +179,7 @@ export class MIROPage extends SAPBasePage {
     await this.clickToolbarButton('模拟')
     await this.waitForPageReady()
 
-    // 检查是否有错误
+    // 检查是否有错误消息
     const status = await this.getStatusMessage()
 
     if (status.includes('错误') || status.includes('Error')) {
@@ -150,20 +193,27 @@ export class MIROPage extends SAPBasePage {
 
   /**
    * 过账（正式提交）
+   * 参考 ffa-test MiroPO.java: page.locator("#M0\\:36\\:\\:btn\\[11\\]").click()
    */
   async post(): Promise<InvoiceResult> {
     logger.step('post', 'Posting invoice...')
 
     const screenshots: string[] = []
-
-    // 先截图记录过账前状态
     screenshots.push(await this.screenshot('before-post'))
 
-    await this.clickToolbarButton('过账')
+    // 使用 ffa-test 中验证过的 ID 选择器过账
+    const postBtn = this.page.locator('#M0\\:36\\:\\:btn\\[11\\]')
+    if (await postBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await postBtn.click()
+    } else {
+      // fallback: 通过文本定位
+      await this.clickToolbarButton('过账')
+    }
     await this.waitForPageReady()
 
     // 处理可能的确认弹窗
     await this.handlePopup()
+    await this.page.waitForTimeout(2000)
 
     // 获取结果
     const status = await this.getStatusMessage()
@@ -187,7 +237,6 @@ export class MIROPage extends SAPBasePage {
       return { success: false, message: status, screenshots }
     }
 
-    // 不确定是否成功
     return {
       success: !status.includes('错误'),
       message: status || 'Post completed, but document number not found',

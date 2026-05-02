@@ -1,0 +1,25 @@
+[
+  {
+    "flow": "create-po",
+    "params": {
+      "vendor": "100071",
+      "material": "ZBW4041TW",
+      "quantity": 1000,
+      "plant": "1112",
+      "company_code": "1110",
+      "purchasing_org": "1110"
+    }
+  },
+  {
+    "flow": "goods-receipt",
+    "params": {
+      "po_number": "{{outputs.create-po.po_number}}"
+    }
+  },
+  {
+    "flow": "query-po-history",
+    "params": {
+      "po_number": "4500201748"
+    }
+  }
+]

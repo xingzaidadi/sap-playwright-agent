@@ -1,0 +1,77 @@
+name: goods-return
+description: MIGO 退货（移动类型 Y23）
+
+params:
+  - name: po_number
+    type: string
+    required: true
+    description: 采购订单号
+  - name: movement_type
+    type: string
+    default: "Y23"
+    description: 移动类型（Y23=退货）
+  - name: return_quantity
+    type: number
+    required: true
+    description: 退货数量
+  - name: posting_date
+    type: string
+    description: 过账日期
+
+steps:
+  - id: navigate
+    action: navigate_tcode
+    params:
+      tcode: MIGO
+
+  - id: select_action
+    action: fill_fields
+    params:
+      fields:
+        操作类型: "A01 收货"
+        参考凭证类型: "R01 采购订单"
+
+  - id: fill_po
+    action: fill_fields
+    params:
+      fields:
+        采购订单号: "{{po_number}}"
+
+  - id: press_enter
+    action: click_button
+    params:
+      button: Enter
+
+  - id: wait_data_load
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: change_movement_type
+    action: fill_fields
+    params:
+      fields:
+        移动类型: "{{movement_type}}"
+
+  - id: fill_quantity
+    action: fill_fields
+    params:
+      fields:
+        数量: "{{return_quantity}}"
+
+  - id: post
+    action: click_button
+    params:
+      button: 过账
+    on_error: ai_diagnose
+
+  - id: capture_result
+    action: extract_text
+    params:
+      element: status_bar
+    output: material_document
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: goods-return-result

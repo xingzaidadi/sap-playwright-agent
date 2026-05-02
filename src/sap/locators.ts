@@ -33,8 +33,8 @@ export const locators = {
     name: '输入事务代码',
   },
 
-  /** SAP 状态栏消息 */
-  statusBar: '#msgArea',
+  /** SAP 状态栏消息（底部栏） */
+  statusBar: '#sapGuiStatusBarMsg, #msgArea, [id*="MessageArea"]',
 
   /** 弹窗检测 */
   popup: {
