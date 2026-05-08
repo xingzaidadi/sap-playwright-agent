@@ -215,6 +215,7 @@ SOP / 图文 / 人工录制 / trace / screenshot / a11y tree
 | SAP Page Object | 已实现 | SAP Adapter |
 | CLI / dry-run / trace / HTML report / batch | 已实现 | 通用内核 |
 | `screenshot_and_report` | 已实现 | 通用内核 |
+| Recording Pack CLI：`record-flow` / `compile-recording` | V1 已实现 | 采集层 |
 | `ai_diagnose` 真实 Claude API 调用 | 规划中 | AI Diagnose |
 | OpenClaw Skill 接入 | 规划中 | Skill 入口 |
 | 飞书自然语言触发 | 规划中 | 用户入口 |

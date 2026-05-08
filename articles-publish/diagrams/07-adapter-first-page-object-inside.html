@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adapter-first, Page Object-inside</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color: #1e293b;
+      background: #eef3f7;
+    }
+    .frame {
+      width: 1200px;
+      height: 675px;
+      padding: 42px 56px;
+      background: #f7fafc;
+    }
+    h1 {
+      margin: 0;
+      font-size: 40px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+    .sub {
+      margin-top: 10px;
+      font-size: 19px;
+      color: #5f6f82;
+    }
+    .columns {
+      margin-top: 38px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    .box {
+      background: #fff;
+      border: 1px solid #d6dee8;
+      border-radius: 8px;
+      padding: 24px;
+      min-height: 430px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+    }
+    .bad { border-top: 8px solid #c2410c; }
+    .good { border-top: 8px solid #0f766e; }
+    h2 {
+      margin: 0 0 18px;
+      font-size: 27px;
+      line-height: 1.2;
+    }
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+    .node {
+      min-height: 62px;
+      border: 1px solid #d8e0ea;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 12px 16px;
+      background: #fbfdff;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .node span {
+      display: block;
+      margin-top: 3px;
+      color: #607086;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .arrow {
+      text-align: center;
+      color: #718096;
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .warning {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #fff7ed;
+      color: #7c2d12;
+      font-size: 18px;
+      line-height: 1.45;
+      border: 1px solid #fed7aa;
+    }
+    .ok {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #ecfdf5;
+      color: #064e3b;
+      font-size: 18px;
+      line-height: 1.45;
+      border: 1px solid #a7f3d0;
+    }
+    .pill {
+      display: inline-block;
+      margin-top: 22px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      background: #172554;
+      color: #fff;
+      font-size: 21px;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <h1>Page Object 不是最高抽象</h1>
+    <div class="sub">在通用企业 Web 自动化框架里，Page Object 有价值，但它应该待在 Adapter 内部。</div>
+
+    <section class="columns">
+      <div class="box bad">
+        <h2>容易退化的做法</h2>
+        <div class="stack">
+          <div class="node">Flow<span>既知道业务顺序，也知道页面怎么点</span></div>
+          <div class="arrow">↓</div>
+          <div class="node">Page Object<span>越来越大，变成 God Object</span></div>
+          <div class="arrow">↓</div>
+          <div class="node">Playwright<span>selector、iframe、键盘细节外泄</span></div>
+        </div>
+        <div class="warning">问题：一旦接入 OA / CRM / SRM，Flow 会被页面细节污染，Page Object 也会从页面封装退化成脚本垃圾桶。</div>
+      </div>
+
+      <div class="box good">
+        <h2>更稳的边界</h2>
+        <div class="stack">
+          <div class="node">Flow Engine<span>只编排业务步骤</span></div>
+          <div class="arrow">↓</div>
+          <div class="node">Action Registry<span>把动作路由到系统能力</span></div>
+          <div class="arrow">↓</div>
+          <div class="node">Adapter<span>系统接入边界，表达领域能力</span></div>
+          <div class="arrow">↓</div>
+          <div class="node">Page Object<span>只封装 Adapter 内部页面细节</span></div>
+        </div>
+        <div class="ok">结论：Adapter-first, Page Object-inside。Flow 不暴露 selector，Page Object 不编排跨系统业务。</div>
+      </div>
+    </section>
+
+    <div class="pill">对外是 Adapter，对内用 Page Object。</div>
+  </main>
+</body>
+</html>

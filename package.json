@@ -9,6 +9,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
+    "record-flow": "tsx src/recording/cli.ts record-flow",
+    "compile-recording": "tsx src/recording/cli.ts compile-recording",
     "start": "node dist/cli.js",
     "test": "vitest"
   },

@@ -258,7 +258,7 @@ recordings/
       review-checklist.md
 ```
 
-当前项目已经先落了一个 V1 模板：
+当前项目已经先落了一个 V1：Recording Pack CLI + 模板。
 
 ```text
 recordings/_template/
@@ -401,7 +401,7 @@ docs/recording-pack.md
 后续可以新增：
 
 ```bash
-npx sap-auto record-flow query-po-history
+npm run record-flow -- query-po-history
 ```
 
 它负责：
@@ -418,7 +418,7 @@ npx sap-auto record-flow query-po-history
 再新增：
 
 ```bash
-npx sap-auto compile-recording recordings/query-po-history
+npm run compile-recording -- recordings/query-po-history
 ```
 
 它负责生成：

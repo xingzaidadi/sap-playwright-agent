@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "1.3"
+version: "1.4"
 description: 当用户要求自动化操作企业 Web 页面、运行业务 Flow、执行 SAP/OA/CRM/SRM 流程、批量操作后台系统、生成或修复 Playwright 自动化能力时触发。仅咨询概念问题不触发。优先使用 Flow Engine + Adapter，不要默认写一次性脚本。
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -9,6 +9,7 @@ changelog:
   "1.1": 重构为通用Web自动化，SAP降为领域模块，新增错误恢复/能力边界/动态Flow
   "1.2": 补充脚本模板、CDP连接、浏览器生命周期、token提示
   "1.3": 引入 Core + Adapter 架构，明确 Page Object 只是 Adapter 内部实现，禁止 Flow 暴露 selector
+  "1.4": Recording Pack CLI: use record-flow and compile-recording before drafting final automation
 ---
 
 # Web UI 自动化 Skill
@@ -41,6 +42,12 @@ AI 只做意图解析、异常诊断和开发辅助。
 当用户提供 SOP、图文、录屏、trace，或要求“根据这个流程生成自动化”时，不要直接写最终脚本。
 
 先创建或补齐 Recording Pack：
+
+```text
+cd E:/sap-playwright-agent
+npm run record-flow -- {flow-name}
+npm run compile-recording -- recordings/{flow-name}
+```
 
 ```text
 recordings/{flow-name}/

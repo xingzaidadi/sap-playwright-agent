@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>通用企业 Web 自动化框架总览</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #5f6b7a;
+      --line: #cfd8e3;
+      --bg: #f6f8fb;
+      --core: #1f7a8c;
+      --adapter: #7b3f98;
+      --runtime: #b45f06;
+      --ai: #276749;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .frame {
+      width: 1200px;
+      height: 675px;
+      padding: 44px 56px;
+      background: linear-gradient(180deg, #ffffff 0%, #f2f6fa 100%);
+    }
+    h1 {
+      margin: 0;
+      font-size: 38px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 19px;
+    }
+    .grid {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: 1.1fr 1.15fr 1fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 24px;
+      min-height: 360px;
+      box-shadow: 0 10px 24px rgba(34, 45, 57, 0.08);
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .tag.core { background: var(--core); }
+    .tag.adapter { background: var(--adapter); }
+    .tag.runtime { background: var(--runtime); }
+    .panel h2 {
+      margin: 16px 0 12px;
+      font-size: 26px;
+      line-height: 1.22;
+    }
+    .panel p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.55;
+    }
+    .list {
+      display: grid;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .item {
+      border-left: 4px solid var(--line);
+      padding: 8px 0 8px 14px;
+      font-size: 18px;
+      line-height: 1.35;
+      background: #fafbfd;
+    }
+    .item strong { display: block; font-size: 19px; margin-bottom: 2px; }
+    .flow {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+    .node {
+      min-height: 74px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 14px 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .node span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .footer {
+      margin-top: 28px;
+      padding: 18px 22px;
+      border-radius: 8px;
+      background: #17202a;
+      color: #fff;
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <h1>通用企业 Web 自动化框架：从 SAP 开始，但不止于 SAP</h1>
+    <div class="subtitle">SAP WebGUI 是第一个高复杂度 Adapter，用来验证通用内核是否经得住真实后台系统的压力。</div>
+
+    <section class="grid">
+      <div class="panel">
+        <span class="tag core">Core</span>
+        <h2>通用内核</h2>
+        <p>把所有系统都会复用的能力沉淀下来，避免每接一个后台系统就重写一套脚本基础设施。</p>
+        <div class="list">
+          <div class="item"><strong>Flow Engine</strong>流程编排、条件分支、错误策略</div>
+          <div class="item"><strong>Action Registry</strong>把业务动作路由到系统能力</div>
+          <div class="item"><strong>Report / Trace</strong>让执行过程可审计、可复盘</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="tag adapter">Adapter</span>
+        <h2>系统适配层</h2>
+        <p>SAP、OA、CRM、SRM 的差异不进入 Flow，而是收敛到各自 Adapter。</p>
+        <div class="list">
+          <div class="item"><strong>SAP Adapter</strong>iframe、TCode、readonly、系统消息</div>
+          <div class="item"><strong>OA Adapter</strong>审批流、组织选择器、附件上传</div>
+          <div class="item"><strong>CRM Adapter</strong>客户搜索、线索阶段、分页表格</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="tag runtime">Runtime</span>
+        <h2>执行与 AI 辅助</h2>
+        <p>AI 不直接接管浏览器，它负责意图解析、异常诊断和草稿生成。</p>
+        <div class="list">
+          <div class="item"><strong>Playwright</strong>稳定执行浏览器动作</div>
+          <div class="item"><strong>AI Diagnose</strong>失败截图、日志、上下文分析</div>
+          <div class="item"><strong>Skill</strong>约束 Agent 按架构产出</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="flow">
+      <div class="node">Flow Engine<span>编排业务流程</span></div>
+      <div class="node">Action Registry<span>路由业务动作</span></div>
+      <div class="node">Adapter<span>隔离系统差异</span></div>
+      <div class="node">Page Object<span>封装页面细节</span></div>
+      <div class="node">Playwright<span>执行浏览器动作</span></div>
+    </section>
+
+    <div class="footer">RPA 是参照系，不是归属；SAP 是第一个样例，不是框架边界。</div>
+  </main>
+</body>
+</html>

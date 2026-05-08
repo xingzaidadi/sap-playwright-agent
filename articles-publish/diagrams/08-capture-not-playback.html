@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Capture, not Playback</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color: #18212f;
+      background: #f2f5f8;
+    }
+    .frame {
+      width: 1200px;
+      height: 675px;
+      padding: 44px 56px;
+      background: #ffffff;
+    }
+    h1 {
+      margin: 0;
+      font-size: 42px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+    .sub {
+      margin-top: 12px;
+      color: #566579;
+      font-size: 20px;
+    }
+    .compare {
+      margin-top: 42px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+    .side {
+      border: 1px solid #d7e0ea;
+      border-radius: 8px;
+      padding: 26px;
+      background: #f9fbfd;
+      min-height: 420px;
+    }
+    .side h2 {
+      margin: 0 0 22px;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+    .left h2 { color: #9a3412; }
+    .right h2 { color: #0f766e; }
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .step {
+      min-height: 56px;
+      border-radius: 8px;
+      border: 1px solid #d7e0ea;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .left .step { border-left: 7px solid #ea580c; }
+    .right .step { border-left: 7px solid #0d9488; }
+    .arrow {
+      text-align: center;
+      color: #7a8797;
+      font-size: 20px;
+      line-height: 1;
+      font-weight: 800;
+    }
+    .note {
+      margin-top: 22px;
+      padding: 16px 18px;
+      border-radius: 8px;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+    .left .note {
+      background: #fff7ed;
+      color: #7c2d12;
+      border: 1px solid #fed7aa;
+    }
+    .right .note {
+      background: #ecfdf5;
+      color: #064e3b;
+      border: 1px solid #a7f3d0;
+    }
+    .bottom {
+      margin-top: 26px;
+      padding: 18px 24px;
+      border-radius: 8px;
+      background: #111827;
+      color: #fff;
+      font-size: 24px;
+      font-weight: 800;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <h1>录制不是回放，而是采集</h1>
+    <div class="sub">复杂企业后台里，真正有价值的不是“鼠标点了哪里”，而是“这个动作对应什么业务语义、需要什么等待和证据”。</div>
+
+    <section class="compare">
+      <div class="side left">
+        <h2>传统录制回放</h2>
+        <div class="flow">
+          <div class="step">记录点击、输入、等待</div>
+          <div class="arrow">↓</div>
+          <div class="step">按原路径回放</div>
+          <div class="arrow">↓</div>
+          <div class="step">页面变化后维护录制脚本</div>
+          <div class="arrow">↓</div>
+          <div class="step">selector 和等待策略分散失控</div>
+        </div>
+        <div class="note">适合稳定、标准化、边界清晰的流程；遇到 iframe、动态 ID、readonly 输入和服务端刷新时维护压力会上升。</div>
+      </div>
+
+      <div class="side right">
+        <h2>Recording Pack 采集编译</h2>
+        <div class="flow">
+          <div class="step">采集 SOP、截图、trace、a11y tree</div>
+          <div class="arrow">↓</div>
+          <div class="step">整理 selector、等待、成功证据</div>
+          <div class="arrow">↓</div>
+          <div class="step">编译 Flow / Action / Adapter 草稿</div>
+          <div class="arrow">↓</div>
+          <div class="step">人工 review 后沉淀为框架能力</div>
+        </div>
+        <div class="note">目标不是复制一次操作，而是把一次人工流程转成可维护、可审计、可迁移的自动化资产。</div>
+      </div>
+    </section>
+
+    <div class="bottom">Capture, not Playback：采集 -> 编译 -> 执行 -> 复盘 -> 沉淀。</div>
+  </main>
+</body>
+</html>

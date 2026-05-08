@@ -12,7 +12,29 @@ It is not traditional RPA-style record-and-playback. A Recording Pack captures S
 
 ## Template
 
-Use `_template/` when starting a new automation flow:
+Use the V1 CLI when starting a new automation flow:
+
+```bash
+npm run record-flow -- query-po-history
+```
+
+Then fill the generated SOP, action notes, selector candidates, wait evidence, screenshots, and a11y snapshots.
+
+Compile the pack into first-pass drafts:
+
+```bash
+npm run compile-recording -- recordings/query-po-history
+```
+
+The compiler creates:
+
+- `drafts/flow.yaml`
+- `drafts/action-registry.md`
+- `drafts/adapter-method.ts`
+- `drafts/page-object-method.ts`
+- `drafts/review-checklist.md`
+
+Use `_template/` only when you need to copy the structure manually:
 
 ```text
 recordings/

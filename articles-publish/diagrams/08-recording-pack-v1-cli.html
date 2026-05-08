@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recording Pack V1 CLI</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      color: #111827;
+      background: #eef2f7;
+    }
+    .frame {
+      width: 1200px;
+      height: 675px;
+      padding: 42px 54px;
+      background: linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%);
+    }
+    h1 {
+      margin: 0;
+      font-size: 40px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+    .sub {
+      margin-top: 10px;
+      color: #5d6978;
+      font-size: 19px;
+    }
+    .commands {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+    .cmd {
+      border-radius: 8px;
+      background: #101827;
+      color: #eef6ff;
+      padding: 18px 20px;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 20px;
+      line-height: 1.45;
+      min-height: 94px;
+      display: flex;
+      align-items: center;
+    }
+    .grid {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: 0.95fr 1.1fr 0.95fr;
+      gap: 22px;
+      align-items: stretch;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #d8e0ea;
+      border-radius: 8px;
+      padding: 22px;
+      min-height: 360px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 25px;
+      line-height: 1.18;
+    }
+    .file {
+      display: flex;
+      align-items: center;
+      min-height: 36px;
+      margin: 8px 0;
+      padding: 7px 10px;
+      border-radius: 6px;
+      background: #f8fafc;
+      border-left: 5px solid #64748b;
+      font-family: Consolas, "Cascadia Mono", monospace;
+      font-size: 16px;
+    }
+    .input .file { border-left-color: #2563eb; }
+    .compile .file { border-left-color: #7c3aed; }
+    .review .file { border-left-color: #059669; }
+    .arrow {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #64748b;
+      font-size: 28px;
+      font-weight: 900;
+      margin: 8px 0;
+    }
+    .footer {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .rule {
+      border-radius: 8px;
+      padding: 15px 16px;
+      background: #ecfeff;
+      border: 1px solid #a5f3fc;
+      color: #164e63;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.35;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <h1>Recording Pack V1：先把采集流程工程化</h1>
+    <div class="sub">V1 不做完整浏览器录制器，先提供两个 CLI：创建采集包，编译自动化草稿。</div>
+
+    <section class="commands">
+      <div class="cmd">npm run record-flow -- query-po-history</div>
+      <div class="cmd">npm run compile-recording -- recordings/query-po-history</div>
+    </section>
+
+    <section class="grid">
+      <div class="panel input">
+        <h2>1. 创建采集包</h2>
+        <div class="file">recording.meta.json</div>
+        <div class="file">sop.md</div>
+        <div class="file">action-notes.md</div>
+        <div class="file">expected-result.md</div>
+        <div class="file">selector-candidates.json</div>
+        <div class="file">wait-evidence.json</div>
+        <div class="file">screenshots/</div>
+        <div class="file">a11y/</div>
+      </div>
+
+      <div class="panel compile">
+        <h2>2. 编译为草稿</h2>
+        <div class="arrow">↓</div>
+        <div class="file">drafts/flow.yaml</div>
+        <div class="file">drafts/action-registry.md</div>
+        <div class="file">drafts/adapter-method.ts</div>
+        <div class="file">drafts/page-object-method.ts</div>
+        <div class="file">drafts/review-checklist.md</div>
+        <div class="arrow">↓</div>
+      </div>
+
+      <div class="panel review">
+        <h2>3. Review 后沉淀</h2>
+        <div class="file">Flow Engine</div>
+        <div class="file">Action Registry</div>
+        <div class="file">Adapter</div>
+        <div class="file">Page Object</div>
+        <div class="file">dry-run</div>
+        <div class="file">report / trace</div>
+      </div>
+    </section>
+
+    <section class="footer">
+      <div class="rule">草稿不是生产代码</div>
+      <div class="rule">Flow 不暴露 selector</div>
+      <div class="rule">不可逆动作必须人工确认</div>
+    </section>
+  </main>
+</body>
+</html>
