@@ -73,8 +73,8 @@ export class SAPSession {
     logger.info(`Got credentials for user: ${username}`)
 
     logger.info(`Navigating to SAP WebGUI: ${url}`)
-    await this.page.goto(url)
-    await this.page.waitForLoadState('networkidle')
+    await this.page.goto(url, { timeout: 60000 })
+    await this.page.waitForLoadState('load')
 
     // 登录方式参考 ffa-test/SapLoginUtil.java（已验证可用）
     // ECC/S4 使用 getByLabel，GTS 使用 ID 选择器
@@ -101,7 +101,7 @@ export class SAPSession {
     await this.page.getByRole('button', { name: '登录' }).click()
 
     // 等待登录完成 — 验证 tcode 输入框出现（真正的成功标志）
-    await this.page.waitForLoadState('networkidle')
+    await this.page.waitForLoadState('load')
     const tcodeField = this.page.getByRole('textbox', { name: '输入事务代码' })
     try {
       await tcodeField.waitFor({ state: 'visible', timeout: 15000 })
@@ -129,14 +129,14 @@ export class SAPSession {
 
     logger.info(`Navigating to SAP GTS: ${url}`)
     await this.page.goto(url)
-    await this.page.waitForLoadState('networkidle')
+    await this.page.waitForLoadState('load')
 
     await this.page.locator('#sap-client').fill(client)
     await this.page.locator('#sap-user').fill(username)
     await this.page.locator('#sap-password').fill(password)
     await this.page.locator('#LOGON_BUTTON').click()
 
-    await this.page.waitForLoadState('networkidle')
+    await this.page.waitForLoadState('load')
     logger.success('SAP GTS login successful')
   }
 
