@@ -20,9 +20,9 @@ steps:
         采购凭证: "{{po_number}}"
 
   - id: press_enter
-    action: click_button
+    action: press_key
     params:
-      button: Enter
+      key: Enter
 
   - id: wait_load
     action: wait

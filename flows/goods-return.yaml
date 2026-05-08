@@ -38,9 +38,9 @@ steps:
         采购订单号: "{{po_number}}"
 
   - id: press_enter
-    action: click_button
+    action: press_key
     params:
-      button: Enter
+      key: Enter
 
   - id: wait_data_load
     action: wait
