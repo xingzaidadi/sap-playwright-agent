@@ -1,0 +1,11 @@
+{
+  "name": "replace-with-flow-name",
+  "domain": "sap",
+  "system": "SAP WebGUI",
+  "source": ["sop", "manual-recording"],
+  "goal": "Describe the business goal",
+  "expectedResult": "Describe the business success evidence",
+  "riskLevel": "read-only",
+  "requiresHumanApproval": false,
+  "createdAt": "YYYY-MM-DDTHH:mm:ss+08:00"
+}

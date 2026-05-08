@@ -1,0 +1,10 @@
+{
+  "steps": [
+    {
+      "after": "describe the preceding action",
+      "waitFor": "describe business-ready evidence",
+      "durationMs": null,
+      "successEvidence": ""
+    }
+  ]
+}
