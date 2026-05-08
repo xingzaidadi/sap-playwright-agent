@@ -71,7 +71,7 @@ npx tsx src/cli.ts list-flows
 npx tsx src/cli.ts run-flow query-po-history --params '{"po_number":"4500225800"}'
 
 # 创建发票
-npx tsx src/cli.ts create-invoice --vendor 100071 --amount 5000
+npx tsx src/cli.ts create-invoice --po 4500201748 --company-code 1000
 
 # 收货
 npx tsx src/cli.ts goods-receipt --po 4500201748

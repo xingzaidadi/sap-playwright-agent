@@ -1,29 +1,22 @@
 name: create-invoice
-description: 创建 SAP 采购发票（MIRO）
+description: Simulate SAP MIRO invoice from a purchase order without posting.
 
 params:
-  - name: vendor
-    type: string
-    required: true
-    description: 供应商编号
-  - name: amount
-    type: number
-    required: true
-    description: 发票总金额
   - name: company_code
     type: string
-    default: "1000"
-    description: 公司代码
+    required: true
+    description: Company code
+  - name: po_number
+    type: string
+    required: true
+    description: Purchase order number
   - name: invoice_date
     type: string
-    description: 发票日期（YYYY-MM-DD），默认今天
-  - name: reference
-    type: string
-    description: 参照号
+    description: Invoice date (YYYY/MM/DD)
   - name: currency
     type: string
     default: "CNY"
-    description: 货币
+    description: Currency
 
 steps:
   - id: navigate
@@ -37,35 +30,49 @@ steps:
       fields:
         公司代码: "{{company_code}}"
 
-  - id: fill_vendor
+  - id: confirm_company_code
+    action: press_key
+    params:
+      key: Enter
+
+  - id: wait_miro_load
+    action: wait
+    params:
+      ms: "2000"
+
+  - id: fill_invoice_date
     action: fill_fields
     params:
       fields:
-        供应商: "{{vendor}}"
+        凭证中的发票日期: "{{invoice_date}}"
     on_error: screenshot_and_report
 
-  - id: fill_amount
+  - id: fill_po
     action: fill_fields
     params:
       fields:
-        金额: "{{amount}}"
+        采购凭证: "{{po_number}}"
+    on_error: screenshot_and_report
 
-  - id: fill_date
-    action: fill_fields
+  - id: press_enter_load_po
+    action: press_key
     params:
-      fields:
-        发票日期: "{{invoice_date}}"
+      key: Enter
+
+  - id: wait_po_load
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: screenshot_before_post
+    action: screenshot
+    params:
+      name: miro-before-post
 
   - id: simulate
     action: click_button
     params:
       button: 模拟
-    on_error: ai_diagnose
-
-  - id: post
-    action: click_button
-    params:
-      button: 过账
     on_error: ai_diagnose
 
   - id: capture_result

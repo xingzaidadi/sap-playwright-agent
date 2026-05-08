@@ -30,12 +30,12 @@ steps:
     action: fill_fields
     params:
       fields:
-        会计年度: "{{fiscal_year}}"
+        财年: "{{fiscal_year}}"
 
   - id: open
     action: click_button
     params:
-      button: 回车
+      button: 显示凭证
     on_error: screenshot_and_report
 
   - id: screenshot_result

@@ -5,8 +5,6 @@ import { Command } from 'commander'
 import { loadConfig } from './utils/config.js'
 import { logger, setLogLevel } from './utils/logger.js'
 import { SAPSession } from './sap/session.js'
-import { MIROPage, InvoiceParams } from './sap/pages/miro-page.js'
-import { MIR4Page } from './sap/pages/mir4-page.js'
 import { FlowRunner } from './engine/flow-runner.js'
 import { listFlows, loadFlow, validateParams } from './engine/flow-loader.js'
 import { generateReport } from './utils/report.js'
@@ -37,83 +35,84 @@ program.hook('preAction', (thisCommand) => {
 })
 
 /**
- * 创建发票
+ * 创建发票（统一走 FlowRunner）
  */
 program
   .command('create-invoice')
-  .description('Create a vendor invoice in SAP (MIRO)')
-  .requiredOption('--vendor <vendor>', 'Vendor number')
-  .requiredOption('--amount <amount>', 'Invoice amount')
+  .description('Simulate a vendor invoice in SAP MIRO from a purchase order (no posting)')
+  .requiredOption('--po <number>', 'Purchase order number')
   .option('--company-code <code>', 'Company code', '1000')
-  .option('--date <date>', 'Invoice date (YYYY-MM-DD)')
-  .option('--reference <ref>', 'Reference number')
+  .option('--date <date>', 'Invoice date (YYYY/MM/DD)')
   .option('--currency <currency>', 'Currency', 'CNY')
+  .option('--report', 'Generate HTML execution report')
   .action(async (opts) => {
     const config = loadConfig()
     const session = new SAPSession(config)
+    registerSession(session)
 
     try {
       const page = await session.start()
       await session.login()
 
-      const miro = new MIROPage(page)
-      const params: InvoiceParams = {
-        vendor: opts.vendor,
-        amount: parseFloat(opts.amount),
-        companyCode: opts.companyCode,
-        invoiceDate: opts.date,
-        reference: opts.reference,
+      const runner = new FlowRunner(page)
+      const result = await runner.run('create-invoice', {
+        company_code: opts.companyCode,
+        po_number: opts.po,
+        invoice_date: opts.date,
         currency: opts.currency,
-        items: [{ amount: parseFloat(opts.amount) }],
-      }
-
-      const result = await miro.createInvoice(params)
+      })
 
       if (result.success) {
-        logger.success(`Invoice created! Document number: ${result.documentNumber}`)
+        logger.success(`MIRO simulation completed! ${result.outputs.document_number || 'done'}`)
       } else {
-        logger.error(`Failed: ${result.message}`)
+        logger.error(`Failed: ${result.error?.message}`)
         process.exitCode = 1
       }
-
-      console.log('\nResult:', JSON.stringify(result, null, 2))
+      if (opts.report) {
+        const reportPath = generateReport(result, runner.runContext?.runDir)
+        console.log(`\nReport: ${reportPath}`)
+      }
     } finally {
       await session.close()
     }
   })
 
 /**
- * 校验发票
+ * 校验发票（统一走 FlowRunner）
  */
 program
   .command('verify-invoice')
   .description('Verify an existing invoice in SAP (MIR4)')
   .requiredOption('--invoice-no <number>', 'Invoice document number')
   .option('--fiscal-year <year>', 'Fiscal year')
-  .option('--fields <fields>', 'Fields to check (comma-separated)', '供应商,金额,公司代码,状态')
+  .option('--report', 'Generate HTML execution report')
   .action(async (opts) => {
     const config = loadConfig()
     const session = new SAPSession(config)
+    registerSession(session)
 
     try {
       const page = await session.start()
       await session.login()
 
-      const mir4 = new MIR4Page(page)
-      const result = await mir4.verifyInvoice({
-        invoiceNumber: opts.invoiceNo,
-        fiscalYear: opts.fiscalYear,
-        checkFields: opts.fields.split(','),
+      const runner = new FlowRunner(page)
+      const result = await runner.run('verify-invoice', {
+        invoice_number: opts.invoiceNo,
+        fiscal_year: opts.fiscalYear,
       })
 
       if (result.success) {
-        logger.success('Invoice verified:')
-        for (const [field, value] of Object.entries(result.fields)) {
-          console.log(`  ${field}: ${value}`)
+        logger.success('Invoice verified')
+        if (Object.keys(result.outputs).length > 0) {
+          console.log('\nOutputs:', JSON.stringify(result.outputs, null, 2))
         }
       } else {
-        logger.error(`Verification failed: ${result.message}`)
+        logger.error(`Verification failed: ${result.error?.message}`)
         process.exitCode = 1
+      }
+      if (opts.report) {
+        const reportPath = generateReport(result, runner.runContext?.runDir)
+        console.log(`\nReport: ${reportPath}`)
       }
     } finally {
       await session.close()
@@ -193,7 +192,7 @@ program
       console.log(`\nDuration: ${result.duration}ms`)
 
       if (opts.report) {
-        const reportPath = generateReport(result)
+        const reportPath = generateReport(result, runner.runContext?.runDir)
         console.log(`\nReport: ${reportPath}`)
       }
     } finally {
@@ -385,7 +384,7 @@ program
         }
 
         if (opts.report) {
-          const reportPath = generateReport(result)
+          const reportPath = generateReport(result, runner.runContext?.runDir)
           console.log(`  Report: ${reportPath}`)
         }
 
@@ -411,14 +410,30 @@ program
  */
 program
   .command('list-flows')
-  .description('List all available flows')
+  .description('List all available flows with details')
   .action(() => {
     const flows = listFlows()
     if (flows.length === 0) {
       console.log('No flows found in ./flows/ directory')
     } else {
-      console.log('Available flows:')
-      flows.forEach(f => console.log(`  - ${f}`))
+      console.log(`\nAvailable flows (${flows.length}):\n`)
+      for (const name of flows) {
+        try {
+          const flow = loadFlow(name)
+          const requiredParams = flow.params
+            .filter(p => p.required && !p.default)
+            .map(p => `${p.name}*`)
+          const optionalParams = flow.params
+            .filter(p => !p.required || p.default)
+            .map(p => p.name)
+          const allParams = [...requiredParams, ...optionalParams].slice(0, 4)
+          const paramStr = allParams.length > 0 ? `[${allParams.join(', ')}]` : ''
+          console.log(`  ${name.padEnd(30)} ${(flow.description || '').padEnd(28)} ${paramStr}`)
+        } catch {
+          console.log(`  ${name.padEnd(30)} (error loading)`)
+        }
+      }
+      console.log('')
     }
   })
 

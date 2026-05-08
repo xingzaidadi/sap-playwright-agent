@@ -39,10 +39,10 @@ describe('flow-loader', () => {
     })
 
     it('should parse steps with on_error', () => {
-      const flow = loadFlow('goods-receipt')
-      const postStep = flow.steps.find(s => s.id === 'post')
-      expect(postStep).toBeDefined()
-      expect(postStep!.on_error).toBe('ai_diagnose')
+      const flow = loadFlow('create-invoice')
+      const simulateStep = flow.steps.find(s => s.id === 'simulate')
+      expect(simulateStep).toBeDefined()
+      expect(simulateStep!.on_error).toBe('ai_diagnose')
     })
   })
 
