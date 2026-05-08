@@ -67,6 +67,29 @@ export class FlowRunner {
       const stepTimestamp = new Date().toISOString()
       const resolvedParams = this.resolveParams(step.params || {})
 
+      if (step.requires_approval && !this.isIrreversibleApproved()) {
+        const errorMsg = `Step "${step.id}" requires explicit approval before running. ${step.approval_reason || 'This step may change business state.'}`
+        logger.error(errorMsg)
+        stepResults.push({
+          stepId: step.id,
+          action: step.action,
+          success: false,
+          error: errorMsg,
+          duration: Date.now() - stepStart,
+          resolvedParams,
+          timestamp: stepTimestamp,
+        })
+        return {
+          flowName,
+          success: false,
+          outputs: this.context.outputs,
+          steps: stepResults,
+          screenshots,
+          duration: Date.now() - startTime,
+          error: { step: step.id, message: errorMsg },
+        }
+      }
+
       try {
         const output = await this.executeStep(step)
 
@@ -263,7 +286,10 @@ export class FlowRunner {
           return { _skipped: true }
         }
         const subFlowName = resolvedParams.flow as string
-        const subParams = resolvedParams.params as Record<string, unknown> || {}
+        const subParams = {
+          ...this.context.params,
+          ...(resolvedParams.params as Record<string, unknown> || {}),
+        }
         const subRunner = new FlowRunner(this.page)
         const subResult = await subRunner.run(subFlowName, subParams)
 
@@ -358,6 +384,11 @@ export class FlowRunner {
     return val.replace(/\{\{(\w+)\}\}/g, (_, name) => {
       return String(this.context.params[name] ?? this.context.outputs[name] ?? '')
     })
+  }
+
+  private isIrreversibleApproved(): boolean {
+    const value = this.context.params.approve_irreversible
+    return value === true || value === 'true' || value === '1' || value === 'yes'
   }
 
   /**

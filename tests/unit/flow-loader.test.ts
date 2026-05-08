@@ -8,6 +8,7 @@ describe('flow-loader', () => {
       expect(flows.length).toBeGreaterThan(0)
       expect(flows).toContain('create-invoice')
       expect(flows).toContain('goods-receipt')
+      expect(flows).toContain('view-goods-receipt')
       expect(flows).toContain('query-po-history')
     })
   })
@@ -43,6 +44,14 @@ describe('flow-loader', () => {
       const simulateStep = flow.steps.find(s => s.id === 'simulate')
       expect(simulateStep).toBeDefined()
       expect(simulateStep!.on_error).toBe('ai_diagnose')
+    })
+
+    it('should parse approval gates on irreversible steps', () => {
+      const flow = loadFlow('goods-receipt')
+      const postStep = flow.steps.find(s => s.id === 'post')
+      expect(postStep).toBeDefined()
+      expect(postStep!.requires_approval).toBe(true)
+      expect(postStep!.approval_reason).toContain('goods receipt')
     })
   })
 

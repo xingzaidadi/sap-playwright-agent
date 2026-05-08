@@ -24,6 +24,8 @@ export interface FlowStep {
   on_error?: 'screenshot_and_report' | 'ai_diagnose' | 'retry' | 'abort'
   output?: string
   condition?: string
+  requires_approval?: boolean
+  approval_reason?: string
 }
 
 export interface FlowDefinition {

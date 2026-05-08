@@ -63,6 +63,8 @@ steps:
     action: click_button
     params:
       button: 过账
+    requires_approval: true
+    approval_reason: Posts a goods return material document in SAP.
     on_error: ai_diagnose
 
   - id: capture_result

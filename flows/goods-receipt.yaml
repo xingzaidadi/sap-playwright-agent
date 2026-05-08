@@ -1,5 +1,5 @@
 name: goods-receipt
-description: MIGO 收货（移动类型 101）
+description: Post SAP MIGO goods receipt (movement type 101).
 
 params:
   - name: po_number
@@ -35,9 +35,9 @@ steps:
     on_error: screenshot_and_report
 
   - id: press_enter
-    action: click_button
+    action: press_key
     params:
-      button: Enter
+      key: Enter
 
   - id: wait_data_load
     action: wait
@@ -53,6 +53,8 @@ steps:
     action: click_button
     params:
       button: 过账
+    requires_approval: true
+    approval_reason: Posts a goods receipt material document in SAP.
     on_error: ai_diagnose
 
   - id: wait_post

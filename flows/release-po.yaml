@@ -33,6 +33,8 @@ steps:
     action: click_button
     params:
       button: 释放
+    requires_approval: true
+    approval_reason: Releases or approves a purchase order in SAP.
     on_error: ai_diagnose
 
   - id: wait_release

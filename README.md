@@ -74,7 +74,7 @@ npx tsx src/cli.ts run-flow query-po-history --params '{"po_number":"4500225800"
 npx tsx src/cli.ts create-invoice --po 4500201748 --company-code 1000
 
 # 收货
-npx tsx src/cli.ts goods-receipt --po 4500201748
+npx tsx src/cli.ts goods-receipt --po 4500201748 --approve-irreversible
 
 # 预览流程（不实际执行）
 npx tsx src/cli.ts run-flow create-po --dry-run --params '{"vendor":"100071","material":"ZBW4041TW","quantity":100}'

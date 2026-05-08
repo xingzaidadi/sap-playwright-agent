@@ -212,6 +212,7 @@ program
   .description('Post goods receipt in SAP (MIGO - 101)')
   .requiredOption('--po <number>', 'Purchase order number')
   .option('--movement-type <type>', 'Movement type', '101')
+  .option('--approve-irreversible', 'Allow irreversible business-state changes')
   .action(async (opts) => {
     const config = loadConfig()
     const session = new SAPSession(config)
@@ -224,6 +225,7 @@ program
       const result = await runner.run('goods-receipt', {
         po_number: opts.po,
         movement_type: opts.movementType,
+        approve_irreversible: opts.approveIrreversible || false,
       })
 
       if (result.success) {

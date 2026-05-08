@@ -1,0 +1,46 @@
+name: view-goods-receipt
+description: View an existing SAP MIGO goods receipt record without posting.
+
+params:
+  - name: po_number
+    type: string
+    required: true
+    description: Purchase order number
+
+steps:
+  - id: navigate
+    action: navigate_tcode
+    params:
+      tcode: MIGO
+
+  - id: wait_migo_load
+    action: wait
+    params:
+      ms: "2000"
+
+  - id: click_po_in_sidebar
+    action: click_button
+    params:
+      button: "{{po_number}}"
+    on_error: screenshot_and_report
+
+  - id: wait_po_load
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: screenshot_items
+    action: screenshot
+    params:
+      name: migo-items-loaded
+
+  - id: capture_result
+    action: extract_text
+    params:
+      element: status_bar
+    output: material_document
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: view-goods-receipt-result
