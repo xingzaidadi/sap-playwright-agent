@@ -1,16 +1,16 @@
-import { Page } from 'playwright'
+﻿import { Page } from 'playwright'
 import { FlowDefinition, FlowStep, FlowResult, StepResult, FlowContext } from './types.js'
 import { loadFlow, validateParams } from './flow-loader.js'
 import { SAPBasePage } from '../sap/base-page.js'
 import { logger } from '../utils/logger.js'
-import { takeScreenshot } from '../utils/screenshot.js'
+import { takeScreenshot, RunContext } from '../utils/screenshot.js'
 import { aiFallback } from '../ai/fallback.js'
 import { ToolskitAPI } from '../utils/toolskit-api.js'
 
 /**
- * Flow 执行引擎
+ * Flow 鎵ц寮曟搸
  *
- * 负责加载 YAML 定义的流程并逐步执行
+ * 璐熻矗鍔犺浇 YAML 瀹氫箟鐨勬祦绋嬪苟閫愭鎵ц
  */
 export class FlowRunner {
   private basePage: SAPBasePage
@@ -20,14 +20,19 @@ export class FlowRunner {
     this.basePage = new SAPBasePage(page)
   }
 
+  /** 褰撳墠杩愯涓婁笅鏂囷紙澶栭儴鍙闂互鑾峰彇杈撳嚭鐩綍锛?*/
+  public runContext: RunContext | null = null
+
   /**
-   * 执行一个 Flow
+   * 鎵ц涓€涓?Flow
    */
   async run(flowName: string, params: Record<string, unknown>): Promise<FlowResult> {
     const startTime = Date.now()
     const flow = loadFlow(flowName)
 
-    // 参数校验
+    // 鍒涘缓鏈杩愯鐨勮緭鍑虹洰褰?    this.runContext = new RunContext(flowName)
+
+    // 鍙傛暟鏍￠獙
     const validation = validateParams(flow, params)
     if (!validation.valid) {
       return {
@@ -41,8 +46,7 @@ export class FlowRunner {
       }
     }
 
-    // 应用默认值
-    this.context.params = { ...params }
+    // 搴旂敤榛樿鍊?    this.context.params = { ...params }
     for (const p of flow.params) {
       if (p.default !== undefined && !(p.name in this.context.params)) {
         this.context.params[p.name] = p.default
@@ -60,37 +64,57 @@ export class FlowRunner {
 
       logger.step(step.id, `Executing...`)
       const stepStart = Date.now()
+      const stepTimestamp = new Date().toISOString()
+      const resolvedParams = this.resolveParams(step.params || {})
 
       try {
         const output = await this.executeStep(step)
 
-        // 存储输出
+        // 瀛樺偍杈撳嚭
         if (step.output && output !== undefined) {
           this.context.outputs[step.output] = output
         }
 
+        let stepScreenshot: string | undefined
+        try {
+          stepScreenshot = await takeScreenshot(
+            this.page,
+            `step-${String(i + 1).padStart(2, '0')}-${step.id}`,
+            this.runContext!
+          )
+        } catch (screenshotError) {
+          logger.warn(`Step screenshot failed for "${step.id}": ${screenshotError}`)
+        }
+
         stepResults.push({
           stepId: step.id,
+          action: step.action,
           success: true,
           output,
+          screenshot: stepScreenshot,
           duration: Date.now() - stepStart,
+          resolvedParams,
+          timestamp: stepTimestamp,
         })
       } catch (error) {
         let errorMsg = error instanceof Error ? error.message : String(error)
-        const screenshot = await takeScreenshot(this.page, `error-${step.id}`)
+        const screenshot = await takeScreenshot(this.page, `error-${step.id}`, this.runContext!)
         screenshots.push(screenshot)
 
         logger.error(`Step "${step.id}" failed: ${errorMsg}`)
 
-        // 错误处理策略
+        // 閿欒澶勭悊绛栫暐
         if (step.on_error === 'retry') {
           logger.info(`Retrying step "${step.id}"...`)
           try {
-            await this.executeStep(step)
-            stepResults.push({ stepId: step.id, success: true, duration: Date.now() - stepStart })
+            const retryOutput = await this.executeStep(step)
+            if (step.output && retryOutput !== undefined) {
+              this.context.outputs[step.output] = retryOutput
+            }
+            stepResults.push({ stepId: step.id, action: step.action, success: true, output: retryOutput, duration: Date.now() - stepStart, resolvedParams, timestamp: stepTimestamp })
             continue
           } catch {
-            // 重试也失败了
+            // 閲嶈瘯涔熷け璐ヤ簡
           }
         }
 
@@ -107,14 +131,14 @@ export class FlowRunner {
 
             if (decision.action === 'retry') {
               await this.executeStep(step)
-              stepResults.push({ stepId: step.id, success: true, duration: Date.now() - stepStart })
+              stepResults.push({ stepId: step.id, action: step.action, success: true, duration: Date.now() - stepStart, resolvedParams, timestamp: stepTimestamp })
               continue
             } else if (decision.action === 'skip') {
               logger.warn(`AI suggests skipping: ${decision.reason}`)
-              stepResults.push({ stepId: step.id, success: true, duration: Date.now() - stepStart })
+              stepResults.push({ stepId: step.id, action: step.action, success: true, duration: Date.now() - stepStart, resolvedParams, timestamp: stepTimestamp })
               continue
             }
-            // abort or other — fall through to error handling
+            // abort or other 鈥?fall through to error handling
             errorMsg = `AI: ${decision.reason}`
           } catch {
             // AI fallback itself failed, continue with normal error
@@ -123,14 +147,17 @@ export class FlowRunner {
 
         stepResults.push({
           stepId: step.id,
+          action: step.action,
           success: false,
           error: errorMsg,
           screenshot,
           duration: Date.now() - stepStart,
+          resolvedParams,
+          timestamp: stepTimestamp,
         })
 
         if (step.on_error === 'screenshot_and_report') {
-          // 继续执行后续步骤
+          // 缁х画鎵ц鍚庣画姝ラ
           continue
         }
 
@@ -159,14 +186,14 @@ export class FlowRunner {
   }
 
   /**
-   * 执行单个步骤
+   * 鎵ц鍗曚釜姝ラ
    */
   private async executeStep(step: FlowStep): Promise<unknown> {
     const resolvedParams = this.resolveParams(step.params || {})
 
     switch (step.action) {
       case 'ensure_logged_in':
-        // 由外部 session 处理
+        // 鐢卞閮?session 澶勭悊
         return
 
       case 'navigate_tcode':
@@ -184,9 +211,7 @@ export class FlowRunner {
       }
 
       case 'fill_table_rows':
-        // TODO: 实现表格填写
-        logger.warn('fill_table_rows not fully implemented yet')
-        return
+        throw new Error('fill_table_rows action is not yet implemented. Use fill_fields for single-row input or implement a custom Page Object method.')
 
       case 'click_button':
         if (resolvedParams.button) {
@@ -194,14 +219,26 @@ export class FlowRunner {
         }
         return
 
-      case 'extract_text':
-        if (resolvedParams.element) {
+      case 'extract_text': {
+        const selector = resolvedParams.element as string
+        if (selector === 'status_bar' || selector === 'message_bar') {
           return await this.basePage.getStatusMessage()
         }
-        return
+        if (selector) {
+          const el = this.page.locator(`[title="${selector}"]`).first()
+          const isVisible = await el.isVisible({ timeout: 3000 }).catch(() => false)
+          if (isVisible) {
+            return await el.textContent() || ''
+          }
+          // 灏濊瘯鐢?selector 鏈韩浣滀负 CSS/XPath
+          const fallback = this.page.locator(selector).first()
+          return await fallback.textContent({ timeout: 5000 }).catch(() => '')
+        }
+        return await this.basePage.getStatusMessage()
+      }
 
       case 'screenshot':
-        return await takeScreenshot(this.page, resolvedParams.name as string || 'step')
+        return await takeScreenshot(this.page, resolvedParams.name as string || 'step', this.runContext ?? undefined)
 
       case 'press_key':
         await this.page.keyboard.press(resolvedParams.key as string || 'Enter')
@@ -220,20 +257,23 @@ export class FlowRunner {
         return
 
       case 'run_sub_flow': {
-        // 条件执行：condition 为"执行条件"，evaluate 为 false 时跳过
         const condition = resolvedParams.condition as string
         if (condition && !this.evaluateCondition(condition)) {
           logger.info(`Skipping sub-flow (condition "${condition}" not met)`)
-          return
+          return { _skipped: true }
         }
         const subFlowName = resolvedParams.flow as string
         const subParams = resolvedParams.params as Record<string, unknown> || {}
         const subRunner = new FlowRunner(this.page)
         const subResult = await subRunner.run(subFlowName, subParams)
+
+        // 鍚堝苟瀛愭祦绋嬬殑 outputs 鍒扮埗绾?        Object.assign(this.context.outputs, subResult.outputs)
+
+        // 灏嗗瓙娴佺▼ steps 瀛樺偍鍒?output 涓緵鎶ュ憡浣跨敤
         if (!subResult.success) {
           throw new Error(`Sub-flow "${subFlowName}" failed: ${subResult.error?.message}`)
         }
-        return subResult.outputs
+        return { ...subResult.outputs, _subSteps: subResult.steps }
       }
 
       case 'api_call': {
@@ -299,8 +339,7 @@ export class FlowRunner {
   }
 
   /**
-   * 简单条件求值（支持 == 和 != 比较）
-   */
+   * 绠€鍗曟潯浠舵眰鍊硷紙鏀寔 == 鍜?!= 姣旇緝锛?   */
   private evaluateCondition(condition: string): boolean {
     if (condition.includes('!=')) {
       const [left, right] = condition.split('!=').map(s => s.trim())
@@ -322,7 +361,7 @@ export class FlowRunner {
   }
 
   /**
-   * 解析参数中的模板变量 {{varName}}
+   * 瑙ｆ瀽鍙傛暟涓殑妯℃澘鍙橀噺 {{varName}}
    */
   private resolveParams(params: Record<string, unknown>): Record<string, unknown> {
     const resolved: Record<string, unknown> = {}

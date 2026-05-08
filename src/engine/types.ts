@@ -35,11 +35,14 @@ export interface FlowDefinition {
 
 export interface StepResult {
   stepId: string
+  action: string
   success: boolean
   output?: unknown
   error?: string
   screenshot?: string
   duration: number
+  resolvedParams?: Record<string, unknown>
+  timestamp?: string
 }
 
 export interface FlowResult {
