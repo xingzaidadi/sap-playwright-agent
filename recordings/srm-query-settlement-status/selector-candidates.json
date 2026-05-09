@@ -1,0 +1,59 @@
+{
+  "candidates": [
+    {
+      "step": 1,
+      "role": "link",
+      "label": "",
+      "text": "Settlement",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Use visible SRM navigation text only as a candidate. Final adapter implementation should prefer stable role/label/title evidence captured from the actual portal."
+    },
+    {
+      "step": 2,
+      "role": "textbox",
+      "label": "Settlement Number",
+      "text": "",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "high",
+      "note": "Business label is preferred over generated DOM ids."
+    },
+    {
+      "step": 2,
+      "role": "textbox",
+      "label": "Supplier",
+      "text": "",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Optional filter. Do not hard-code a real supplier value in generated Flow."
+    },
+    {
+      "step": 3,
+      "role": "button",
+      "label": "Search",
+      "text": "Search",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Search is allowed because this Recording Pack is read-only."
+    },
+    {
+      "step": 5,
+      "role": "",
+      "label": "Status",
+      "text": "",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Status value should be extracted as evidence, not used as a brittle selector."
+    }
+  ]
+}

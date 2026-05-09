@@ -1,0 +1,73 @@
+{
+  "schema_version": "automation-plan-v1",
+  "recording": {
+    "name": "srm-query-settlement-status",
+    "domain": "sap-srm",
+    "system": "SAP SRM Portal",
+    "source": [
+      "sop",
+      "manual-recording"
+    ]
+  },
+  "flow": {
+    "name": "srm-query-settlement-status",
+    "adapter": "sap-srm",
+    "risk": "read_only",
+    "action": "srm_query_settlement_status",
+    "contract": {
+      "valid": true,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "action": {
+    "name": "srm_query_settlement_status",
+    "params": [
+      "input"
+    ],
+    "maps_to_adapter_method": "srmQuerySettlementStatus"
+  },
+  "adapter": {
+    "name": "sap-srm",
+    "method": "srmQuerySettlementStatus",
+    "responsibilities": [
+      "Convert business params into system-specific page operations.",
+      "Handle navigation, waits, dialogs, and system messages.",
+      "Return structured business result and evidence."
+    ]
+  },
+  "page_object": {
+    "class_name": "SrmQuerySettlementStatusPage",
+    "methods": [
+      "open",
+      "performSrmQuerySettlementStatus",
+      "readSuccessEvidence"
+    ],
+    "boundary": "Page Object stays inside Adapter and must not orchestrate cross-system business flow."
+  },
+  "safety": {
+    "risk": "read_only",
+    "requires_human_approval": false,
+    "review_points": [
+      "Confirm business inputs are current and complete.",
+      "Confirm selectors remain behind Adapter/Page Object, not Flow YAML.",
+      "Confirm irreversible operations have approval gates.",
+      "Confirm success evidence is observable and reportable."
+    ]
+  },
+  "evidence": {
+    "expected_result": "The SRM settlement status is visible on screen and captured as evidence with settlement number, supplier, status, and last update information when available.",
+    "artifacts": [
+      "drafts/flow.yaml",
+      "drafts/flow-contract.json",
+      "drafts/automation-plan.json",
+      "drafts/automation-plan-validation.json",
+      "drafts/action-registry.md",
+      "drafts/adapter-method.ts",
+      "drafts/page-object-method.ts",
+      "drafts/review-checklist.md",
+      "drafts/promotion-gate.json",
+      "drafts/promotion-checklist.md"
+    ]
+  }
+}

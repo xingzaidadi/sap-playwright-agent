@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "2.6"
+version: "2.7"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -22,6 +22,7 @@ changelog:
   "2.4": Draft Promotion Gate V1 defines review checks before generated drafts can be promoted into production Flow, Action, Adapter, and Page Object files.
   "2.5": Promotion dry-run CLI inspects generated drafts before production promotion without writing production files.
   "2.6": Recording Compiler internals are split into flow draft, automation plan, code draft, promotion gate, templates, naming, and shared type modules; V2 architecture docs are available.
+  "2.7": V3 has started with an SRM read-only Recording Pack sample; Promotion Gate now targets SRM action drafts at integration-actions and current SRM Page Object paths.
 ---
 
 # Web UI Automation Skill
@@ -50,17 +51,20 @@ For `E:/sap-playwright-agent`, use this status model:
 V1 complete:
   Recording Pack + Flow Engine + HTML Report loop exists.
 
-V2 in progress:
+V2 complete:
   Run Context, Step Evidence, enhanced reports, SAP ECC primitives,
   read-only/change-flow split, approval gate, Action Registry V1,
   Adapter Registry V1, SAP/SRM adapter interfaces, Flow Contract V1,
   Recording Compiler contract validation, Automation Plan V1,
   Automation Plan validation, Plan-to-Code Draft V1, Draft Promotion Gate V1,
   Promotion dry-run, compiler module split, and V2 architecture docs are in place.
-  The next architecture step is starting V3 with a cleaned second adapter candidate.
+  V2 is closed enough to serve as the framework baseline.
 
-V3 not started:
-  SRM is the second Adapter candidate, but current SRM drafts are experimental.
+V3 started:
+  SRM is the second Adapter candidate. A read-only Recording Pack sample exists at
+  recordings/srm-query-settlement-status and reaches Promotion Gate ready_for_review
+  in dry-run mode. Current older SRM drafts remain experimental and must not be
+  promoted without cleanup, redaction, contract validation, approval review, and dry-run.
 ```
 
 Current framing:
@@ -78,6 +82,7 @@ Developer architecture reference:
 
 ```text
 E:/sap-playwright-agent/docs/v2-architecture.md
+E:/sap-playwright-agent/articles-publish/ (V3 SRM second adapter launch plan)
 ```
 
 ## Behavior Priority

@@ -1,0 +1,21 @@
+name: srm-query-settlement-status
+description: Query the current settlement status in SAP SRM without submitting,
+  confirming, rejecting, posting, uploading, or changing any business document.
+metadata:
+  schema_version: flow-v1
+  adapter: sap-srm
+  risk: read_only
+params:
+  - name: input
+    type: string
+    required: true
+    description: Replace with real business input fields.
+steps:
+  - id: srm_query_settlement_status
+    action: srm_query_settlement_status
+    params:
+      input: "{{input}}"
+    expect:
+      - text: The SRM settlement status is visible on screen and captured as evidence
+          with settlement number, supplier, status, and last update information
+          when available.

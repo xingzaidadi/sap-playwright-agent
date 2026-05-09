@@ -182,8 +182,11 @@ function riskApprovalEvidence(plan: AutomationPlan): string {
 }
 
 function actionModuleTarget(adapterName: string): string {
-  if (adapterName === 'sap-ecc' || adapterName === 'sap-srm') {
+  if (adapterName === 'sap-ecc') {
     return 'src/engine/actions/sap-actions.ts'
+  }
+  if (adapterName === 'sap-srm') {
+    return 'src/engine/actions/integration-actions.ts'
   }
   return `src/engine/actions/${toKebabCase(adapterName)}-actions.ts`
 }
@@ -193,7 +196,7 @@ function pageObjectTarget(adapterName: string, pageClassName: string): string {
     return `src/sap/pages/${toKebabCase(pageClassName)}.ts`
   }
   if (adapterName === 'sap-srm') {
-    return `src/sap/srm/pages/${toKebabCase(pageClassName)}.ts`
+    return `src/sap/pages/${toKebabCase(pageClassName)}.ts`
   }
   return `src/adapters/${toKebabCase(adapterName)}/pages/${toKebabCase(pageClassName)}.ts`
 }

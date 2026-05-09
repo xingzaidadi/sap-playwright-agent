@@ -1,0 +1,14 @@
+{
+  "name": "srm-query-settlement-status",
+  "domain": "sap-srm",
+  "system": "SAP SRM Portal",
+  "source": [
+    "sop",
+    "manual-recording"
+  ],
+  "goal": "Query the current settlement status in SAP SRM without submitting, confirming, rejecting, posting, uploading, or changing any business document.",
+  "expectedResult": "The SRM settlement status is visible on screen and captured as evidence with settlement number, supplier, status, and last update information when available.",
+  "riskLevel": "read-only",
+  "requiresHumanApproval": false,
+  "createdAt": "2026-05-09T06:43:01.166Z"
+}

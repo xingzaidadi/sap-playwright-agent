@@ -202,9 +202,9 @@ describe('recording-pack', () => {
     const promotionGate = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'promotion-gate.json'), 'utf-8'))
     expect(promotionGate.status).toBe('ready_for_review')
     expect(promotionGate.target_files).toMatchObject({
-      action_module: 'src/engine/actions/sap-actions.ts',
+      action_module: 'src/engine/actions/integration-actions.ts',
       adapter_module: 'src/engine/adapters/sap-srm-adapter.ts',
-      page_object_module: 'src/sap/srm/pages/create-settlement-page.ts',
+      page_object_module: 'src/sap/pages/create-settlement-page.ts',
     })
     expect(
       promotionGate.required_checks.find((item: { id: string }) => item.id === 'risk-and-approval-reviewed')

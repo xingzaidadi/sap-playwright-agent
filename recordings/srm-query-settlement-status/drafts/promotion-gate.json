@@ -1,0 +1,69 @@
+{
+  "schema_version": "promotion-gate-v1",
+  "status": "ready_for_review",
+  "recording": "srm-query-settlement-status",
+  "flow": "srm-query-settlement-status",
+  "action": "srm_query_settlement_status",
+  "adapter": "sap-srm",
+  "adapter_method": "srmQuerySettlementStatus",
+  "manual_reviewer_required": true,
+  "target_files": {
+    "flow": "flows/srm-query-settlement-status.yaml",
+    "action_module": "src/engine/actions/integration-actions.ts",
+    "adapter_module": "src/engine/adapters/sap-srm-adapter.ts",
+    "page_object_module": "src/sap/pages/srm-query-settlement-status-page.ts"
+  },
+  "required_checks": [
+    {
+      "id": "flow-contract-valid",
+      "status": "pass",
+      "evidence": "Flow contract valid=true, errors=0, warnings=0."
+    },
+    {
+      "id": "automation-plan-valid",
+      "status": "pass",
+      "evidence": "Automation plan errors=0, warnings=0."
+    },
+    {
+      "id": "target-files-declared",
+      "status": "pass",
+      "evidence": "flows/srm-query-settlement-status.yaml, src/engine/actions/integration-actions.ts, src/engine/adapters/sap-srm-adapter.ts, src/sap/pages/srm-query-settlement-status-page.ts"
+    },
+    {
+      "id": "action-name-reviewed",
+      "status": "manual_review",
+      "evidence": "Review Flow action \"srm_query_settlement_status\" before adding it to src/engine/actions/integration-actions.ts."
+    },
+    {
+      "id": "adapter-method-reviewed",
+      "status": "manual_review",
+      "evidence": "Review Adapter method \"srmQuerySettlementStatus\" and return evidence contract before production use."
+    },
+    {
+      "id": "page-object-boundary-reviewed",
+      "status": "manual_review",
+      "evidence": "Confirm \"SrmQuerySettlementStatusPage\" keeps selectors inside Adapter/Page Object and does not orchestrate the business flow."
+    },
+    {
+      "id": "risk-and-approval-reviewed",
+      "status": "pass",
+      "evidence": "Risk=read_only. No irreversible business operation declared."
+    },
+    {
+      "id": "evidence-reviewed",
+      "status": "manual_review",
+      "evidence": "Confirm expected result is observable: The SRM settlement status is visible on screen and captured as evidence with settlement number, supplier, status, and last update information when available."
+    },
+    {
+      "id": "secrets-and-sensitive-data-reviewed",
+      "status": "manual_review",
+      "evidence": "Confirm recordings, screenshots, selectors, and generated drafts contain no passwords, cookies, tokens, internal URLs, supplier-sensitive data, or customer private data."
+    },
+    {
+      "id": "production-write-blocked",
+      "status": "pass",
+      "evidence": "Compiler generated draft artifacts only; no production Flow/Action/Adapter/Page Object files were written."
+    }
+  ],
+  "note": "Generated drafts can enter human review when status is ready_for_review. Production promotion remains manual until every manual_review item is explicitly resolved."
+}
