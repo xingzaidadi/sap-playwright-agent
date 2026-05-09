@@ -5,11 +5,20 @@ import {
   type SrmQuerySettlementStatusParams,
   type SrmQuerySettlementStatusResult,
 } from '../../sap/pages/srm-query-settlement-status-page.js'
+import {
+  SrmConfirmSettlementPage,
+  type SrmConfirmSettlementParams,
+  type SrmConfirmSettlementResult,
+} from '../../sap/pages/srm-confirm-settlement-page.js'
 
 export type {
   SrmQuerySettlementStatusParams,
   SrmQuerySettlementStatusResult,
 } from '../../sap/pages/srm-query-settlement-status-page.js'
+export type {
+  SrmConfirmSettlementParams,
+  SrmConfirmSettlementResult,
+} from '../../sap/pages/srm-confirm-settlement-page.js'
 
 export interface CreateSettlementParams {
   vendor: string
@@ -33,16 +42,19 @@ export interface SapSrmAdapter {
   srmQuerySettlementStatus(params: SrmQuerySettlementStatusParams): Promise<SrmQuerySettlementStatusResult>
   uploadPOScan(vendor: string, poNumber: string, filePath: string): Promise<unknown>
   createSettlement(params: CreateSettlementParams): Promise<unknown>
+  confirmSettlement(params: SrmConfirmSettlementParams): Promise<SrmConfirmSettlementResult>
   confirmAndGenerateInvoice(params: ConfirmInvoiceParams): Promise<unknown>
 }
 
 export class DefaultSapSrmAdapter implements SapSrmAdapter {
   private srmPage: SRMPage
   private querySettlementStatusPage: SrmQuerySettlementStatusPage
+  private confirmSettlementPage: SrmConfirmSettlementPage
 
   constructor(page: Page) {
     this.srmPage = new SRMPage(page)
     this.querySettlementStatusPage = new SrmQuerySettlementStatusPage(page)
+    this.confirmSettlementPage = new SrmConfirmSettlementPage(page)
   }
 
   async srmQuerySettlementStatus(params: SrmQuerySettlementStatusParams): Promise<SrmQuerySettlementStatusResult> {
@@ -57,6 +69,12 @@ export class DefaultSapSrmAdapter implements SapSrmAdapter {
 
   async createSettlement(params: CreateSettlementParams): Promise<unknown> {
     return await this.srmPage.createSettlement(params)
+  }
+
+  async confirmSettlement(params: SrmConfirmSettlementParams): Promise<SrmConfirmSettlementResult> {
+    await this.confirmSettlementPage.open()
+    await this.confirmSettlementPage.performConfirmSettlement(params)
+    return await this.confirmSettlementPage.readSuccessEvidence(params)
   }
 
   async confirmAndGenerateInvoice(params: ConfirmInvoiceParams): Promise<unknown> {

@@ -106,10 +106,10 @@ describe('flow-capabilities', () => {
     })
   })
 
-  it('warns but does not fail for draft SRM split capabilities when approval is present', () => {
+  it('passes implemented irreversible SRM split capabilities when approval is present', () => {
     const result = validateFlowCapabilities({
-      name: 'srm-confirm-settlement-draft',
-      description: 'Confirm SRM settlement through draft split capability.',
+      name: 'srm-confirm-settlement',
+      description: 'Confirm SRM settlement through implemented split capability.',
       metadata: {
         schema_version: 'flow-v1',
         adapter: 'sap-srm',
@@ -127,14 +127,12 @@ describe('flow-capabilities', () => {
     })
 
     expect(result.valid).toBe(true)
-    expect(result.warnings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          path: 'steps[0].action',
-          message: expect.stringContaining('status=draft'),
-        }),
-      ])
-    )
+    expect(result.errors).toHaveLength(0)
+    expect(result.warnings).toHaveLength(0)
+    expect(result.steps[0]).toMatchObject({
+      status: 'matched',
+      capability: 'confirmSettlement',
+    })
   })
 
   it('fails draft irreversible SRM split capabilities without approval', () => {

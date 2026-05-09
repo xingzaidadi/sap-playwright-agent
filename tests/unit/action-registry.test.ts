@@ -17,6 +17,7 @@ describe('ActionRegistry', () => {
       'press_key',
       'run_sub_flow',
       'screenshot',
+      'srm_confirm_settlement',
       'srm_create_settlement',
       'srm_operation',
       'srm_query_settlement_status',
@@ -38,6 +39,36 @@ describe('ActionRegistry', () => {
       params: {},
       outputs: {},
       getAdapter: () => ({ srmQuerySettlementStatus }),
+      evaluateCondition: () => true,
+      runSubFlow: async () => ({
+        flowName: 'noop',
+        success: true,
+        outputs: {},
+        steps: [],
+        screenshots: [],
+        duration: 0,
+      }),
+    })
+
+    expect(result).toEqual({
+      settlementNumber: '9600000001',
+    })
+  })
+
+  it('maps srm_confirm_settlement to the SRM adapter confirmSettlement method', async () => {
+    const registry = createDefaultActionRegistry()
+    const confirmSettlement = async (params: unknown) => params
+
+    const result = await registry.get('srm_confirm_settlement')?.execute({
+      page: {} as never,
+      step: { id: 'confirm', action: 'srm_confirm_settlement' },
+      resolvedParams: {
+        settlement_id: '9600000001',
+      },
+      runContext: null,
+      params: {},
+      outputs: {},
+      getAdapter: () => ({ confirmSettlement }),
       evaluateCondition: () => true,
       runSubFlow: async () => ({
         flowName: 'noop',

@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "3.7"
+version: "3.8"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -33,6 +33,7 @@ changelog:
   "3.5": `recordings/srm-generate-invoice` is a dedicated draft Recording Pack; `generateInvoice` is now a draft capability with explicit settlement and date params.
   "3.6": `srmQuerySettlementStatus` now has a read-only production skeleton with Flow, Action, Adapter method, Page Object, explicit `settlement_number` param, and scanner alignment.
   "3.7": `recordings/srm-create-settlement` now uses explicit business params instead of generic `input`; generated drafts align with `srm_create_settlement` action params.
+  "3.8": `confirmSettlement` now has an approval-gated production skeleton with Flow, Action, Adapter method, Page Object, explicit `settlement_id` param, and scanner alignment.
 ---
 
 # Web UI Automation Skill
@@ -94,8 +95,10 @@ V3 started:
   umbrella `srm_operation` action.
   `srm-generate-invoice` is assessed as a legacy combined irreversible capability.
   `recordings/srm-confirm-settlement` is a dedicated irreversible change-flow draft
-  mapped to `SapSrmAdapter.confirmSettlement`; it is ready_for_review only and must
-  not be executed or promoted without explicit human approval and production review.
+  mapped to `SapSrmAdapter.confirmSettlement`; it now has an approval-gated production
+  skeleton with `srm_confirm_settlement` action and explicit `settlement_id` param.
+  It must still not be executed against a real SRM system without explicit human
+  approval and environment validation.
   `recordings/srm-generate-invoice` is a dedicated irreversible change-flow draft
   mapped to `SapSrmAdapter.generateInvoice`; it is ready_for_review only and must
   not be executed or promoted without explicit human approval and production review.

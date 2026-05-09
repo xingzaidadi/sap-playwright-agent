@@ -18,11 +18,11 @@ Status: `ready_for_review`
 | Check | Status | Evidence |
 |-------|--------|----------|
 | flow-contract-valid | pass | Flow contract valid=true, errors=0, warnings=0. |
-| automation-plan-valid | pass | Automation plan errors=0, warnings=1. |
+| automation-plan-valid | pass | Automation plan errors=0, warnings=0. |
 | target-files-declared | pass | flows/srm-confirm-settlement.yaml, src/engine/actions/integration-actions.ts, src/engine/adapters/sap-srm-adapter.ts, src/sap/pages/srm-confirm-settlement-page.ts |
 | action-name-reviewed | manual_review | Review Flow action "srm_confirm_settlement" before adding it to src/engine/actions/integration-actions.ts. |
 | adapter-method-reviewed | manual_review | Review Adapter method "confirmSettlement" and return evidence contract before production use. |
-| adapter-capability-reviewed | manual_review | Capability confirmSettlement is declared with status=draft and required evidence=settlement confirmation status is visible, SRM confirmation success message is captured. |
+| adapter-capability-reviewed | pass | Capability confirmSettlement is declared with status=implemented and required evidence=settlement confirmation status is visible, SRM confirmation success message is captured. |
 | adapter-capability-risk-aligned | pass | Capability risk=irreversible matches flow risk=irreversible; approval requirement=true. |
 | page-object-boundary-reviewed | manual_review | Confirm "SrmConfirmSettlementPage" keeps selectors inside Adapter/Page Object and does not orchestrate the business flow. |
 | risk-and-approval-reviewed | manual_review | Risk=irreversible. Human approval required before execution. Reason=Review the recording and confirm this business operation before execution.. |

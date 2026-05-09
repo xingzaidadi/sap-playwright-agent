@@ -36,7 +36,7 @@
       "action": "srm_confirm_settlement",
       "method": "confirmSettlement",
       "risk": "irreversible",
-      "status": "draft",
+      "status": "implemented",
       "requires_human_approval": true,
       "evidence": [
         "settlement confirmation status is visible",

@@ -372,7 +372,7 @@ describe('recording-pack', () => {
     expect(plan.adapter.capability).toMatchObject({
       declared: true,
       name: 'confirmSettlement',
-      status: 'draft',
+      status: 'implemented',
     })
 
     const actionDraft = readFileSync(join(recordingDir, 'drafts', 'action-registry.md'), 'utf-8')

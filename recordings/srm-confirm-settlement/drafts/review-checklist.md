@@ -7,7 +7,7 @@ Primary review artifact: `automation-plan.json`
 - [ ] Flow step uses business action name: `srm_confirm_settlement`.
 - [ ] Automation plan reviewed: `automation-plan-v1`.
 - [ ] Automation plan validation reviewed: valid.
-- [ ] Automation plan warnings reviewed: 1.
+- [ ] Automation plan warnings reviewed: 0.
 - [ ] Automation plan errors resolved: 0.
 - [ ] Flow params contain business data, not selectors.
 - [ ] Flow has clear success evidence.

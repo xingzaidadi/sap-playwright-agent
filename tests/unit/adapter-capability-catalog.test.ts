@@ -66,21 +66,15 @@ describe('adapter capability catalog', () => {
     expect(irreversibleCapabilities.every(capability => capability.requiresHumanApproval)).toBe(true)
   })
 
-  it('tracks irreversible draft capabilities after the read-only query is implemented', () => {
+  it('tracks irreversible draft capabilities after confirm settlement is implemented', () => {
     const registry = createDefaultAdapterRegistry()
     const draftCapabilities = registry
       .listCapabilities(SAP_SRM_ADAPTER)
       .filter((capability: AdapterCapability) => capability.status === 'draft')
 
     expect(draftCapabilities.map(capability => capability.name)).toEqual([
-      'confirmSettlement',
       'generateInvoice',
     ])
-    expect(draftCapabilities.find(capability => capability.name === 'confirmSettlement')).toMatchObject({
-      name: 'confirmSettlement',
-      risk: 'irreversible',
-      requiresHumanApproval: true,
-    })
     expect(draftCapabilities.find(capability => capability.name === 'generateInvoice')).toMatchObject({
       name: 'generateInvoice',
       risk: 'irreversible',
@@ -93,7 +87,7 @@ describe('adapter capability catalog', () => {
 
     expect(registry.getCapability(SAP_SRM_ADAPTER, 'confirmSettlement')).toMatchObject({
       action: 'srm_confirm_settlement',
-      status: 'draft',
+      status: 'implemented',
       risk: 'irreversible',
       requiresHumanApproval: true,
     })

@@ -22,7 +22,7 @@
     {
       "id": "automation-plan-valid",
       "status": "pass",
-      "evidence": "Automation plan errors=0, warnings=1."
+      "evidence": "Automation plan errors=0, warnings=0."
     },
     {
       "id": "target-files-declared",
@@ -41,8 +41,8 @@
     },
     {
       "id": "adapter-capability-reviewed",
-      "status": "manual_review",
-      "evidence": "Capability confirmSettlement is declared with status=draft and required evidence=settlement confirmation status is visible, SRM confirmation success message is captured."
+      "status": "pass",
+      "evidence": "Capability confirmSettlement is declared with status=implemented and required evidence=settlement confirmation status is visible, SRM confirmation success message is captured."
     },
     {
       "id": "adapter-capability-risk-aligned",

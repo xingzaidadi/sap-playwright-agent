@@ -22,6 +22,8 @@ export type {
   ConfirmInvoiceParams,
   CreateSettlementParams,
   SapSrmAdapter,
+  SrmConfirmSettlementParams,
+  SrmConfirmSettlementResult,
   SrmQuerySettlementStatusParams,
   SrmQuerySettlementStatusResult,
 } from './sap-srm-adapter.js'

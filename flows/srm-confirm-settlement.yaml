@@ -1,0 +1,21 @@
+name: srm-confirm-settlement
+description: Confirm an existing SRM settlement document after explicit human approval.
+metadata:
+  schema_version: flow-v1
+  adapter: sap-srm
+  risk: irreversible
+params:
+  - name: settlement_id
+    type: string
+    required: true
+    description: SRM settlement document number to confirm.
+steps:
+  - id: confirm_settlement
+    action: srm_confirm_settlement
+    params:
+      settlement_id: "{{settlement_id}}"
+    expect:
+      - text: Settlement number and confirmation success evidence are visible.
+    requires_approval: true
+    approval_reason: Confirming SRM settlement changes business state and must be reviewed before execution.
+    output: confirmation_result

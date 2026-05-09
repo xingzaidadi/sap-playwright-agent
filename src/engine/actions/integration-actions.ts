@@ -70,6 +70,15 @@ export function registerIntegrationActions(registry: ActionRegistry): void {
         return await srm.createSettlement(createSettlementParams(resolvedParams))
       },
     })
+    .register({
+      name: 'srm_confirm_settlement',
+      async execute({ getAdapter, resolvedParams }) {
+        const srm = getAdapter<SapSrmAdapter>(SAP_SRM_ADAPTER)
+        return await srm.confirmSettlement({
+          settlementNumber: resolvedParams.settlement_id as string,
+        })
+      },
+    })
 }
 
 function createSettlementParams(resolvedParams: Record<string, unknown>) {
