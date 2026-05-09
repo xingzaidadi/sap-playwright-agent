@@ -11,6 +11,61 @@ describe('AdapterRegistry', () => {
     ])
   })
 
+  it('declares default adapter capabilities', () => {
+    const registry = createDefaultAdapterRegistry()
+
+    expect(registry.listCapabilities('sap-ecc').map(capability => capability.name)).toEqual([
+      'navigateTcode',
+      'fillFields',
+      'clickButton',
+      'extractText',
+    ])
+
+    const srmCapabilities = registry.listCapabilities('sap-srm')
+    expect(srmCapabilities.map(capability => capability.name)).toEqual([
+      'srmQuerySettlementStatus',
+      'uploadPOScan',
+      'createSettlement',
+      'confirmAndGenerateInvoice',
+    ])
+    expect(registry.getCapability('sap-srm', 'srmQuerySettlementStatus')).toMatchObject({
+      action: 'srm_query_settlement_status',
+      risk: 'read_only',
+      status: 'draft',
+      requiresHumanApproval: false,
+    })
+    expect(registry.getCapability('sap-srm', 'confirmAndGenerateInvoice')).toMatchObject({
+      risk: 'irreversible',
+      status: 'implemented',
+      requiresHumanApproval: true,
+    })
+  })
+
+  it('rejects duplicate capability names for one adapter', () => {
+    const registry = new AdapterRegistry()
+
+    expect(() => registry.register({
+      name: 'demo',
+      capabilities: [
+        {
+          name: 'query',
+          risk: 'read_only',
+          status: 'implemented',
+          requiresHumanApproval: false,
+          evidence: ['result is visible'],
+        },
+        {
+          name: 'query',
+          risk: 'read_only',
+          status: 'draft',
+          requiresHumanApproval: false,
+          evidence: ['result is visible'],
+        },
+      ],
+      create: () => ({}),
+    })).toThrow('Adapter "demo" capability "query" is already declared')
+  })
+
   it('rejects duplicate adapter names', () => {
     const registry = new AdapterRegistry()
     registry.register({ name: 'sap-ecc', create: () => ({}) })
