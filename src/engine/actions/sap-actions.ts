@@ -1,16 +1,20 @@
+import { SAPBasePage } from '../../sap/base-page.js'
+import { SAP_ECC_ADAPTER } from '../adapters/index.js'
 import type { ActionRegistry } from './registry.js'
 
 export function registerSapActions(registry: ActionRegistry): void {
   registry
     .register({
       name: 'navigate_tcode',
-      async execute({ basePage, resolvedParams }) {
+      async execute({ getAdapter, resolvedParams }) {
+        const basePage = getAdapter<SAPBasePage>(SAP_ECC_ADAPTER)
         await basePage.goToTcode(resolvedParams.tcode as string)
       },
     })
     .register({
       name: 'fill_fields',
-      async execute({ basePage, resolvedParams }) {
+      async execute({ getAdapter, resolvedParams }) {
+        const basePage = getAdapter<SAPBasePage>(SAP_ECC_ADAPTER)
         const fields = resolvedParams.fields as Record<string, string>
         for (const [label, value] of Object.entries(fields)) {
           if (value) {
@@ -27,7 +31,8 @@ export function registerSapActions(registry: ActionRegistry): void {
     })
     .register({
       name: 'click_button',
-      async execute({ basePage, resolvedParams }) {
+      async execute({ getAdapter, resolvedParams }) {
+        const basePage = getAdapter<SAPBasePage>(SAP_ECC_ADAPTER)
         if (resolvedParams.button) {
           await basePage.clickToolbarButton(resolvedParams.button as string)
         }
@@ -35,7 +40,8 @@ export function registerSapActions(registry: ActionRegistry): void {
     })
     .register({
       name: 'extract_text',
-      async execute({ page, basePage, resolvedParams }) {
+      async execute({ page, getAdapter, resolvedParams }) {
+        const basePage = getAdapter<SAPBasePage>(SAP_ECC_ADAPTER)
         const selector = resolvedParams.element as string
         if (selector === 'status_bar' || selector === 'message_bar') {
           return await basePage.getStatusMessage()

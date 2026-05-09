@@ -1,24 +1,22 @@
 import { Page } from 'playwright'
 import { FlowContext, FlowResult, FlowStep, StepResult } from './types.js'
 import { loadFlow, validateParams } from './flow-loader.js'
-import { SAPBasePage } from '../sap/base-page.js'
 import { logger } from '../utils/logger.js'
 import { RunContext, takeScreenshot } from '../utils/screenshot.js'
 import { aiFallback } from '../ai/fallback.js'
 import { ActionRegistry, createDefaultActionRegistry } from './actions/index.js'
+import { AdapterRegistry, createDefaultAdapterRegistry } from './adapters/index.js'
 
 export class FlowRunner {
-  private basePage: SAPBasePage
   private context: FlowContext = { params: {}, outputs: {}, currentStep: 0 }
 
   public runContext: RunContext | null = null
 
   constructor(
     private page: Page,
-    private actionRegistry: ActionRegistry = createDefaultActionRegistry()
-  ) {
-    this.basePage = new SAPBasePage(page)
-  }
+    private actionRegistry: ActionRegistry = createDefaultActionRegistry(),
+    private adapterRegistry: AdapterRegistry = createDefaultAdapterRegistry()
+  ) {}
 
   async run(flowName: string, params: Record<string, unknown>): Promise<FlowResult> {
     const startTime = Date.now()
@@ -231,15 +229,15 @@ export class FlowRunner {
 
     return await action.execute({
       page: this.page,
-      basePage: this.basePage,
       step,
       resolvedParams,
       runContext: this.runContext,
       params: this.context.params,
       outputs: this.context.outputs,
+      getAdapter: (name) => this.adapterRegistry.get(name, { page: this.page }),
       evaluateCondition: (condition) => this.evaluateCondition(condition),
       runSubFlow: async (subFlowName, subParams) => {
-        const subRunner = new FlowRunner(this.page, this.actionRegistry)
+        const subRunner = new FlowRunner(this.page, this.actionRegistry, this.adapterRegistry)
         return await subRunner.run(subFlowName, subParams)
       },
     })

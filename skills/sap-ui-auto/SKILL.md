@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "1.6"
+version: "1.7"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -12,6 +12,7 @@ changelog:
   "1.4": Added Recording Pack CLI guidance.
   "1.5": Added V1/V2/V3 status, fresh execution contract, evidence requirements, approval gate, read-only/change-flow split, and SRM experimental boundary.
   "1.6": Action Registry V1 is implemented; FlowRunner dispatches actions through registered core, SAP, and integration action modules.
+  "1.7": Adapter Registry V1 is implemented; FlowRunner now depends on registered adapters instead of SAP page objects directly.
 ---
 
 # Web UI Automation Skill
@@ -42,8 +43,9 @@ V1 complete:
 
 V2 in progress:
   Run Context, Step Evidence, enhanced reports, SAP ECC primitives,
-  read-only/change-flow split, approval gate, and Action Registry V1 are in place.
-  Adapter Registry is still the next architecture step.
+  read-only/change-flow split, approval gate, Action Registry V1,
+  and Adapter Registry V1 are in place.
+  The next architecture step is expanding adapters beyond SAP/SRM samples.
 
 V3 not started:
   SRM is the second Adapter candidate, but current SRM drafts are experimental.
@@ -52,7 +54,7 @@ V3 not started:
 Current framing:
 
 ```text
-Core = Recording Pack + Flow Engine + Action Registry + Run Context + Evidence Report + Approval Gate
+Core = Recording Pack + Flow Engine + Action Registry + Adapter Registry + Run Context + Evidence Report + Approval Gate
 SAP ECC = first real Adapter sample
 SRM = second Adapter candidate / experimental area
 Business Flow = reusable sample or workflow asset, not the generic core itself
@@ -171,6 +173,7 @@ Core handles capabilities that should work across SAP, SRM, OA, CRM, and generic
 - approval gate
 - AI Diagnose input construction
 - Action Registry V1
+- Adapter Registry V1
 
 ### Adapter
 
@@ -188,6 +191,8 @@ Flow -> Action Registry -> Adapter -> Page Object -> Playwright
 ```
 
 Do not let Flow depend on Page Object directly. Do not expose selectors, iframe paths, or DOM details in Flow unless it is a temporary exploratory draft.
+
+Adapter Registry V1 lives in `src/engine/adapters/*`. FlowRunner should not import SAP/SRM page objects directly. Actions should call `getAdapter(adapterName)` and then invoke domain methods on that adapter.
 
 ### Page Object
 
@@ -252,10 +257,11 @@ Process:
 2. Read existing Adapter / Page Object code.
 3. Add or reuse an Adapter method.
 4. Register an action in `src/engine/actions/*`.
-5. Add a YAML Flow.
-6. Run dry-run.
-7. Run real execution only when risk is acceptable.
-8. Save report / trace / screenshot evidence.
+5. Register or reuse the system adapter in `src/engine/adapters/*`.
+6. Add a YAML Flow.
+7. Run dry-run.
+8. Run real execution only when risk is acceptable.
+9. Save report / trace / screenshot evidence.
 ```
 
 Action Registry V1 keeps existing YAML action names compatible. When adding a new reusable action, register it in the relevant action module instead of adding a new switch branch to `FlowRunner`.
