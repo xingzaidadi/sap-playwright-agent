@@ -10,6 +10,20 @@ export interface FlowParam {
   description?: string
 }
 
+export type FlowRiskLevel = 'read_only' | 'simulated_change' | 'reversible_change' | 'irreversible'
+
+export interface FlowMetadata {
+  schema_version?: 'flow-v1'
+  adapter?: string
+  adapters?: string[]
+  risk?: FlowRiskLevel
+  owner?: string
+  boundary?: {
+    allow_page_details?: boolean
+    notes?: string
+  }
+}
+
 export interface FlowStepExpect {
   element?: string
   text?: string
@@ -31,6 +45,7 @@ export interface FlowStep {
 export interface FlowDefinition {
   name: string
   description: string
+  metadata?: FlowMetadata
   params: FlowParam[]
   steps: FlowStep[]
 }

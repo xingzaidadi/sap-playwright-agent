@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { loadFlow, validateParams, listFlows } from '../../src/engine/flow-loader.js'
+import { loadFlow, validateFlowContract, validateParams, listFlows } from '../../src/engine/flow-loader.js'
 
 describe('flow-loader', () => {
   describe('listFlows', () => {
@@ -53,6 +53,16 @@ describe('flow-loader', () => {
       expect(postStep!.requires_approval).toBe(true)
       expect(postStep!.approval_reason).toContain('goods receipt')
     })
+
+    it('should parse flow contract metadata', () => {
+      const flow = loadFlow('goods-receipt')
+
+      expect(flow.metadata).toEqual({
+        schema_version: 'flow-v1',
+        adapter: 'sap-ecc',
+        risk: 'irreversible',
+      })
+    })
   })
 
   describe('validateParams', () => {
@@ -80,6 +90,67 @@ describe('flow-loader', () => {
         plant: '1112',
       })
       expect(result.valid).toBe(true)
+    })
+  })
+
+  describe('validateFlowContract', () => {
+    it('should validate tracked flow contracts', () => {
+      const flowNames = [
+        'create-invoice',
+        'create-po',
+        'full-procurement-settlement',
+        'goods-receipt',
+        'goods-return',
+        'query-po-history',
+        'release-po',
+        'srm-create-settlement',
+        'srm-generate-invoice',
+        'verify-invoice',
+        'view-goods-receipt',
+      ]
+
+      for (const flowName of flowNames) {
+        const result = validateFlowContract(loadFlow(flowName))
+        expect(result.errors, `${flowName}: ${JSON.stringify(result.errors)}`).toHaveLength(0)
+      }
+    })
+
+    it('should require approval gates for irreversible flows', () => {
+      const result = validateFlowContract({
+        name: 'unsafe-flow',
+        description: 'Unsafe test flow',
+        metadata: {
+          schema_version: 'flow-v1',
+          adapter: 'sap-ecc',
+          risk: 'irreversible',
+        },
+        params: [],
+        steps: [
+          { id: 'post', action: 'click_button', params: { button: 'Post' } },
+        ],
+      })
+
+      expect(result.valid).toBe(false)
+      expect(result.errors.map(error => error.path)).toContain('steps')
+    })
+
+    it('should warn when flows expose page details', () => {
+      const result = validateFlowContract({
+        name: 'leaky-flow',
+        description: 'Leaky test flow',
+        metadata: {
+          schema_version: 'flow-v1',
+          adapter: 'sap-ecc',
+          risk: 'read_only',
+        },
+        params: [],
+        steps: [
+          { id: 'read', action: 'extract_text', params: { selector: '#status' } },
+        ],
+      })
+
+      expect(result.valid).toBe(true)
+      expect(result.warnings.map(warning => warning.path)).toContain('steps[0].params.selector')
     })
   })
 })

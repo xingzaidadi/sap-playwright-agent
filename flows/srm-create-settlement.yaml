@@ -1,4 +1,8 @@
 name: srm-create-settlement
+metadata:
+  schema_version: flow-v1
+  adapter: sap-srm
+  risk: irreversible
 description: SRM 创建结算对账单（Web Portal）
 
 params:
@@ -77,6 +81,8 @@ steps:
     action: click_button
     params:
       button: 创建对帐单
+    requires_approval: true
+    approval_reason: Creates an SRM settlement document and may change business state.
 
   - id: wait_create
     action: wait

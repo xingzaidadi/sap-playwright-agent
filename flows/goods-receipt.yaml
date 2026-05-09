@@ -1,5 +1,9 @@
 name: goods-receipt
 description: Post SAP MIGO goods receipt (movement type 101).
+metadata:
+  schema_version: flow-v1
+  adapter: sap-ecc
+  risk: irreversible
 
 params:
   - name: po_number

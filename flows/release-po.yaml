@@ -1,4 +1,8 @@
 name: release-po
+metadata:
+  schema_version: flow-v1
+  adapter: sap-ecc
+  risk: irreversible
 description: ME29N 释放/审批采购订单
 
 params:

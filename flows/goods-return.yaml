@@ -1,4 +1,8 @@
 name: goods-return
+metadata:
+  schema_version: flow-v1
+  adapter: sap-ecc
+  risk: irreversible
 description: MIGO 退货（移动类型 Y23）
 
 params:

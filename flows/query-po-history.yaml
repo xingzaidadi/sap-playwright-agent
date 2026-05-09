@@ -1,4 +1,8 @@
 name: query-po-history
+metadata:
+  schema_version: flow-v1
+  adapter: sap-ecc
+  risk: read_only
 description: ME2N 查询采购凭证列表/ME23N 查看PO历史
 
 params:

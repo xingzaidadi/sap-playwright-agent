@@ -1,4 +1,8 @@
 name: srm-generate-invoice
+metadata:
+  schema_version: flow-v1
+  adapter: sap-srm
+  risk: irreversible
 description: SRM 对账单管理 - 生成SAP暂估发票 + 对账单确认
 
 params:
@@ -61,6 +65,8 @@ steps:
     action: click_button
     params:
       button: 提交
+    requires_approval: true
+    approval_reason: Submits SRM settlement confirmation and may change business state.
 
   - id: wait_submit
     action: wait
@@ -85,6 +91,8 @@ steps:
     action: click_button
     params:
       button: 确定
+    requires_approval: true
+    approval_reason: Confirms SAP estimated invoice generation and may change business state.
 
   - id: wait_invoice
     action: wait

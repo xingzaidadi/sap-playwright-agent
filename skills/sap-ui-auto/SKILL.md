@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "1.8"
+version: "1.9"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -14,6 +14,7 @@ changelog:
   "1.6": Action Registry V1 is implemented; FlowRunner dispatches actions through registered core, SAP, and integration action modules.
   "1.7": Adapter Registry V1 is implemented; FlowRunner now depends on registered adapters instead of SAP page objects directly.
   "1.8": SAP/SRM adapters now expose domain interfaces to actions; Page Objects stay behind adapters.
+  "1.9": Flow Contract V1 metadata and validation clarify adapter ownership, risk level, approval gates, and page-detail boundaries.
 ---
 
 # Web UI Automation Skill
@@ -45,7 +46,7 @@ V1 complete:
 V2 in progress:
   Run Context, Step Evidence, enhanced reports, SAP ECC primitives,
   read-only/change-flow split, approval gate, Action Registry V1,
-  Adapter Registry V1, and SAP/SRM adapter interfaces are in place.
+  Adapter Registry V1, SAP/SRM adapter interfaces, and Flow Contract V1 are in place.
   The next architecture step is expanding adapters beyond SAP/SRM samples.
 
 V3 not started:
@@ -55,7 +56,7 @@ V3 not started:
 Current framing:
 
 ```text
-Core = Recording Pack + Flow Engine + Action Registry + Adapter Registry + Run Context + Evidence Report + Approval Gate
+Core = Recording Pack + Flow Engine + Flow Contract + Action Registry + Adapter Registry + Run Context + Evidence Report + Approval Gate
 SAP ECC = first real Adapter sample
 SRM = second Adapter candidate / experimental area
 Business Flow = reusable sample or workflow asset, not the generic core itself
@@ -173,6 +174,7 @@ Core handles capabilities that should work across SAP, SRM, OA, CRM, and generic
 - dry-run
 - approval gate
 - AI Diagnose input construction
+- Flow Contract V1 metadata and validation
 - Action Registry V1
 - Adapter Registry V1
 
@@ -192,6 +194,17 @@ Flow -> Action Registry -> Adapter -> Page Object -> Playwright
 ```
 
 Do not let Flow depend on Page Object directly. Do not expose selectors, iframe paths, or DOM details in Flow unless it is a temporary exploratory draft.
+
+Flow YAML should declare contract metadata:
+
+```yaml
+metadata:
+  schema_version: flow-v1
+  adapter: sap-ecc
+  risk: read_only
+```
+
+Valid risk levels are `read_only`, `simulated_change`, `reversible_change`, and `irreversible`. Irreversible Flow contracts must include an approval gate before state-changing steps.
 
 Adapter Registry V1 lives in `src/engine/adapters/*`. FlowRunner should not import SAP/SRM page objects directly. Actions should call `getAdapter(adapterName)` and then invoke domain methods on that adapter.
 

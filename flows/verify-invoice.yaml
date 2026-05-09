@@ -1,4 +1,8 @@
 name: verify-invoice
+metadata:
+  schema_version: flow-v1
+  adapter: sap-ecc
+  risk: read_only
 description: 查看并校验已存在的发票（MIR4）
 
 params:

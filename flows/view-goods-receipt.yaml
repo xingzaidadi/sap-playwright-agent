@@ -1,5 +1,9 @@
 name: view-goods-receipt
 description: View an existing SAP MIGO goods receipt record without posting.
+metadata:
+  schema_version: flow-v1
+  adapter: sap-ecc
+  risk: read_only
 
 params:
   - name: po_number

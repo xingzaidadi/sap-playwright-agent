@@ -1,5 +1,9 @@
 name: create-invoice
 description: Simulate SAP MIRO invoice from a purchase order without posting.
+metadata:
+  schema_version: flow-v1
+  adapter: sap-ecc
+  risk: simulated_change
 
 params:
   - name: company_code

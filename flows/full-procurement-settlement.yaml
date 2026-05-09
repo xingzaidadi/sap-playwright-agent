@@ -1,4 +1,10 @@
 name: full-procurement-settlement
+metadata:
+  schema_version: flow-v1
+  adapters:
+    - sap-ecc
+    - sap-srm
+  risk: irreversible
 description: 完整采购→结算全流程（参考 流程.docx）
 
 # 流程概览（参考截图 image_24）:
@@ -65,6 +71,8 @@ steps:
   # ===== Phase 1: SAP GUI - 采购订单 =====
   - id: create_po
     action: run_sub_flow
+    requires_approval: true
+    approval_reason: Starts an end-to-end procurement and settlement flow that may create or update business documents.
     params:
       flow: create-po
       condition: "{{skip_po_creation}} != true"
