@@ -60,6 +60,8 @@ describe('adapter capability catalog', () => {
     expect(irreversibleCapabilities.map(capability => capability.name)).toEqual([
       'createSettlement',
       'confirmAndGenerateInvoice',
+      'confirmSettlement',
+      'generateInvoice',
     ])
     expect(irreversibleCapabilities.every(capability => capability.requiresHumanApproval)).toBe(true)
   })
@@ -75,6 +77,23 @@ describe('adapter capability catalog', () => {
       name: 'srmQuerySettlementStatus',
       risk: 'read_only',
       requiresHumanApproval: false,
+    })
+  })
+
+  it('declares invoice split capabilities as planned, not implemented', () => {
+    const registry = createDefaultAdapterRegistry()
+
+    expect(registry.getCapability(SAP_SRM_ADAPTER, 'confirmSettlement')).toMatchObject({
+      action: 'srm_confirm_settlement',
+      status: 'planned',
+      risk: 'irreversible',
+      requiresHumanApproval: true,
+    })
+    expect(registry.getCapability(SAP_SRM_ADAPTER, 'generateInvoice')).toMatchObject({
+      action: 'srm_generate_invoice',
+      status: 'planned',
+      risk: 'irreversible',
+      requiresHumanApproval: true,
     })
   })
 })

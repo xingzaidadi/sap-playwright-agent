@@ -27,6 +27,8 @@ describe('AdapterRegistry', () => {
       'uploadPOScan',
       'createSettlement',
       'confirmAndGenerateInvoice',
+      'confirmSettlement',
+      'generateInvoice',
     ])
     expect(registry.getCapability('sap-srm', 'srmQuerySettlementStatus')).toMatchObject({
       action: 'srm_query_settlement_status',
@@ -37,6 +39,12 @@ describe('AdapterRegistry', () => {
     expect(registry.getCapability('sap-srm', 'confirmAndGenerateInvoice')).toMatchObject({
       risk: 'irreversible',
       status: 'implemented',
+      requiresHumanApproval: true,
+    })
+    expect(registry.getCapability('sap-srm', 'confirmSettlement')).toMatchObject({
+      action: 'srm_confirm_settlement',
+      risk: 'irreversible',
+      status: 'planned',
       requiresHumanApproval: true,
     })
   })

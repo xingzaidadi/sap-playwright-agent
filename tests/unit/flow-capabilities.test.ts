@@ -108,6 +108,59 @@ describe('flow-capabilities', () => {
     )
   })
 
+  it('warns but does not fail for planned SRM split capabilities when approval is present', () => {
+    const result = validateFlowCapabilities({
+      name: 'srm-confirm-settlement-planned',
+      description: 'Confirm SRM settlement through planned split capability.',
+      metadata: {
+        schema_version: 'flow-v1',
+        adapter: 'sap-srm',
+        risk: 'irreversible',
+      },
+      params: [],
+      steps: [
+        {
+          id: 'confirm',
+          action: 'srm_confirm_settlement',
+          requires_approval: true,
+          approval_reason: 'Confirms SRM settlement and changes business state.',
+        },
+      ],
+    })
+
+    expect(result.valid).toBe(true)
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'steps[0].action',
+          message: expect.stringContaining('status=planned'),
+        }),
+      ])
+    )
+  })
+
+  it('fails planned irreversible SRM split capabilities without approval', () => {
+    const result = validateFlowCapabilities({
+      name: 'srm-generate-invoice-planned',
+      description: 'Generate invoice through planned split capability.',
+      metadata: {
+        schema_version: 'flow-v1',
+        adapter: 'sap-srm',
+        risk: 'irreversible',
+      },
+      params: [],
+      steps: [
+        {
+          id: 'generate',
+          action: 'srm_generate_invoice',
+        },
+      ],
+    })
+
+    expect(result.valid).toBe(false)
+    expect(result.errors.map(error => error.path)).toContain('steps[0].requires_approval')
+  })
+
   it('scans a directory of Flow files', () => {
     const flowsDir = makeTempRoot()
     const flow: FlowDefinition = {

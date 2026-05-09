@@ -84,6 +84,27 @@ export const SAP_SRM_CAPABILITIES: AdapterCapability[] = [
     status: 'implemented',
     requiresHumanApproval: true,
     evidence: ['confirmation status is visible', 'generated invoice evidence is captured'],
+    notes: 'Legacy combined capability. Prefer planned split capabilities once Recording Pack evidence is available.',
+  },
+  {
+    name: 'confirmSettlement',
+    action: 'srm_confirm_settlement',
+    method: 'confirmSettlement',
+    risk: 'irreversible',
+    status: 'planned',
+    requiresHumanApproval: true,
+    evidence: ['settlement confirmation status is visible', 'SRM confirmation success message is captured'],
+    notes: 'Planned split from confirmAndGenerateInvoice. Do not promote before a dedicated Recording Pack and adapter method exist.',
+  },
+  {
+    name: 'generateInvoice',
+    action: 'srm_generate_invoice',
+    method: 'generateInvoice',
+    risk: 'irreversible',
+    status: 'planned',
+    requiresHumanApproval: true,
+    evidence: ['generated SAP invoice number is captured', 'invoice generation success message is visible'],
+    notes: 'Planned split from confirmAndGenerateInvoice. Do not promote before a dedicated Recording Pack and adapter method exist.',
   },
 ]
 
