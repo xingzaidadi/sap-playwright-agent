@@ -101,10 +101,10 @@ export const SAP_SRM_CAPABILITIES: AdapterCapability[] = [
     action: 'srm_generate_invoice',
     method: 'generateInvoice',
     risk: 'irreversible',
-    status: 'planned',
+    status: 'draft',
     requiresHumanApproval: true,
     evidence: ['generated SAP invoice number is captured', 'invoice generation success message is visible'],
-    notes: 'Planned split from confirmAndGenerateInvoice. Do not promote before a dedicated Recording Pack and adapter method exist.',
+    notes: 'Draft split from confirmAndGenerateInvoice. Recording Pack exists at recordings/srm-generate-invoice; do not promote before adapter method review and production approval.',
   },
 ]
 

@@ -314,6 +314,62 @@ describe('recording-pack', () => {
     expect(adapterDraft).toContain('settlement_id: string')
   })
 
+  it('supports multiple explicit recording params for generated change-flow drafts', () => {
+    const projectRoot = makeTempRoot()
+    createRecordingPack('srm-generate-invoice', {
+      projectRoot,
+      domain: 'sap-srm',
+      system: 'SAP SRM Portal',
+      riskLevel: 'irreversible',
+      requiresHumanApproval: true,
+      adapterMethod: 'generateInvoice',
+      params: [
+        { name: 'settlement_number', type: 'string', required: true },
+        { name: 'invoice_date', type: 'string', required: true },
+        { name: 'posting_date', type: 'string', required: true },
+        { name: 'base_date', type: 'string', required: true },
+      ],
+    })
+
+    const recordingDir = join(projectRoot, 'recordings', 'srm-generate-invoice')
+    compileRecordingPack(recordingDir)
+
+    const flowDraft = parseYaml(readFileSync(join(recordingDir, 'drafts', 'flow.yaml'), 'utf-8'))
+    expect(flowDraft.params.map((param: { name: string }) => param.name)).toEqual([
+      'settlement_number',
+      'invoice_date',
+      'posting_date',
+      'base_date',
+    ])
+    expect(flowDraft.steps[0].params).toEqual({
+      settlement_number: '{{settlement_number}}',
+      invoice_date: '{{invoice_date}}',
+      posting_date: '{{posting_date}}',
+      base_date: '{{base_date}}',
+    })
+
+    const plan = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan.json'), 'utf-8'))
+    expect(plan.action.params).toEqual([
+      'settlement_number',
+      'invoice_date',
+      'posting_date',
+      'base_date',
+    ])
+    expect(plan.adapter.capability).toMatchObject({
+      declared: true,
+      name: 'generateInvoice',
+      status: 'draft',
+    })
+
+    const actionDraft = readFileSync(join(recordingDir, 'drafts', 'action-registry.md'), 'utf-8')
+    expect(actionDraft).toContain('settlement_number: resolvedParams.settlement_number as string')
+    expect(actionDraft).toContain('base_date: resolvedParams.base_date as string')
+
+    const adapterDraft = readFileSync(join(recordingDir, 'drafts', 'adapter-method.ts'), 'utf-8')
+    expect(adapterDraft).toContain('settlement_number: string')
+    expect(adapterDraft).toContain('base_date: string')
+  })
+
   it('validates Automation Plan consistency', () => {
     const plan: AutomationPlan = {
       schema_version: 'automation-plan-v1',

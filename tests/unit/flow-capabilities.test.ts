@@ -139,10 +139,10 @@ describe('flow-capabilities', () => {
     )
   })
 
-  it('fails planned irreversible SRM split capabilities without approval', () => {
+  it('fails draft irreversible SRM split capabilities without approval', () => {
     const result = validateFlowCapabilities({
-      name: 'srm-generate-invoice-planned',
-      description: 'Generate invoice through planned split capability.',
+      name: 'srm-generate-invoice-draft',
+      description: 'Generate invoice through draft split capability.',
       metadata: {
         schema_version: 'flow-v1',
         adapter: 'sap-srm',

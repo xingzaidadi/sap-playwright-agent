@@ -1,0 +1,38 @@
+name: srm-generate-invoice
+description: Generate an SAP estimated invoice from a reviewed SRM settlement
+  document through an approval-gated change-flow Recording Pack.
+metadata:
+  schema_version: flow-v1
+  adapter: sap-srm
+  risk: irreversible
+params:
+  - name: settlement_number
+    type: string
+    required: true
+    description: Confirmed SRM settlement document number used to generate the SAP
+      estimated invoice.
+  - name: invoice_date
+    type: string
+    required: true
+    description: Invoice date in business-approved format, for example YYYY.MM.DD.
+  - name: posting_date
+    type: string
+    required: true
+    description: Posting date in business-approved format, for example YYYY.MM.DD.
+  - name: base_date
+    type: string
+    required: true
+    description: Baseline date in business-approved format, for example YYYY.MM.DD.
+steps:
+  - id: srm_generate_invoice
+    action: srm_generate_invoice
+    params:
+      settlement_number: "{{settlement_number}}"
+      invoice_date: "{{invoice_date}}"
+      posting_date: "{{posting_date}}"
+      base_date: "{{base_date}}"
+    expect:
+      - text: Generated SAP estimated invoice evidence is captured with invoice number
+          or generation success message after explicit human approval.
+    requires_approval: true
+    approval_reason: Review the recording and confirm this business operation before execution.

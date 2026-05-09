@@ -47,6 +47,12 @@ describe('AdapterRegistry', () => {
       status: 'draft',
       requiresHumanApproval: true,
     })
+    expect(registry.getCapability('sap-srm', 'generateInvoice')).toMatchObject({
+      action: 'srm_generate_invoice',
+      risk: 'irreversible',
+      status: 'draft',
+      requiresHumanApproval: true,
+    })
   })
 
   it('rejects duplicate capability names for one adapter', () => {

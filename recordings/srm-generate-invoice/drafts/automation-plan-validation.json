@@ -1,0 +1,11 @@
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [
+    {
+      "level": "warning",
+      "path": "adapter.capability.status",
+      "message": "Adapter capability status is draft; production promotion requires manual review."
+    }
+  ]
+}

@@ -75,6 +75,7 @@ describe('adapter capability catalog', () => {
     expect(draftCapabilities.map(capability => capability.name)).toEqual([
       'srmQuerySettlementStatus',
       'confirmSettlement',
+      'generateInvoice',
     ])
     expect(draftCapabilities.find(capability => capability.name === 'srmQuerySettlementStatus')).toMatchObject({
       name: 'srmQuerySettlementStatus',
@@ -83,6 +84,11 @@ describe('adapter capability catalog', () => {
     })
     expect(draftCapabilities.find(capability => capability.name === 'confirmSettlement')).toMatchObject({
       name: 'confirmSettlement',
+      risk: 'irreversible',
+      requiresHumanApproval: true,
+    })
+    expect(draftCapabilities.find(capability => capability.name === 'generateInvoice')).toMatchObject({
+      name: 'generateInvoice',
       risk: 'irreversible',
       requiresHumanApproval: true,
     })
@@ -99,7 +105,7 @@ describe('adapter capability catalog', () => {
     })
     expect(registry.getCapability(SAP_SRM_ADAPTER, 'generateInvoice')).toMatchObject({
       action: 'srm_generate_invoice',
-      status: 'planned',
+      status: 'draft',
       risk: 'irreversible',
       requiresHumanApproval: true,
     })

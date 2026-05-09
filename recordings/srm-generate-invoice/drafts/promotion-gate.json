@@ -1,0 +1,79 @@
+{
+  "schema_version": "promotion-gate-v1",
+  "status": "ready_for_review",
+  "recording": "srm-generate-invoice",
+  "flow": "srm-generate-invoice",
+  "action": "srm_generate_invoice",
+  "adapter": "sap-srm",
+  "adapter_method": "generateInvoice",
+  "manual_reviewer_required": true,
+  "target_files": {
+    "flow": "flows/srm-generate-invoice.yaml",
+    "action_module": "src/engine/actions/integration-actions.ts",
+    "adapter_module": "src/engine/adapters/sap-srm-adapter.ts",
+    "page_object_module": "src/sap/pages/srm-generate-invoice-page.ts"
+  },
+  "required_checks": [
+    {
+      "id": "flow-contract-valid",
+      "status": "pass",
+      "evidence": "Flow contract valid=true, errors=0, warnings=0."
+    },
+    {
+      "id": "automation-plan-valid",
+      "status": "pass",
+      "evidence": "Automation plan errors=0, warnings=1."
+    },
+    {
+      "id": "target-files-declared",
+      "status": "pass",
+      "evidence": "flows/srm-generate-invoice.yaml, src/engine/actions/integration-actions.ts, src/engine/adapters/sap-srm-adapter.ts, src/sap/pages/srm-generate-invoice-page.ts"
+    },
+    {
+      "id": "action-name-reviewed",
+      "status": "manual_review",
+      "evidence": "Review Flow action \"srm_generate_invoice\" before adding it to src/engine/actions/integration-actions.ts."
+    },
+    {
+      "id": "adapter-method-reviewed",
+      "status": "manual_review",
+      "evidence": "Review Adapter method \"generateInvoice\" and return evidence contract before production use."
+    },
+    {
+      "id": "adapter-capability-reviewed",
+      "status": "manual_review",
+      "evidence": "Capability generateInvoice is declared with status=draft and required evidence=generated SAP invoice number is captured, invoice generation success message is visible."
+    },
+    {
+      "id": "adapter-capability-risk-aligned",
+      "status": "pass",
+      "evidence": "Capability risk=irreversible matches flow risk=irreversible; approval requirement=true."
+    },
+    {
+      "id": "page-object-boundary-reviewed",
+      "status": "manual_review",
+      "evidence": "Confirm \"SrmGenerateInvoicePage\" keeps selectors inside Adapter/Page Object and does not orchestrate the business flow."
+    },
+    {
+      "id": "risk-and-approval-reviewed",
+      "status": "manual_review",
+      "evidence": "Risk=irreversible. Human approval required before execution. Reason=Review the recording and confirm this business operation before execution.."
+    },
+    {
+      "id": "evidence-reviewed",
+      "status": "manual_review",
+      "evidence": "Confirm expected result is observable: Generated SAP estimated invoice evidence is captured with invoice number or generation success message after explicit human approval."
+    },
+    {
+      "id": "secrets-and-sensitive-data-reviewed",
+      "status": "manual_review",
+      "evidence": "Confirm recordings, screenshots, selectors, and generated drafts contain no passwords, cookies, tokens, internal URLs, supplier-sensitive data, or customer private data."
+    },
+    {
+      "id": "production-write-blocked",
+      "status": "pass",
+      "evidence": "Compiler generated draft artifacts only; no production Flow/Action/Adapter/Page Object files were written."
+    }
+  ],
+  "note": "Generated drafts can enter human review when status is ready_for_review. Production promotion remains manual until every manual_review item is explicitly resolved."
+}
