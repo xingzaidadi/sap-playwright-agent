@@ -14,6 +14,7 @@ Use this file to translate manual operation into automation actions.
 
 - The final create step is irreversible and must not run without human approval.
 - Current business data must be provided at run time. Do not hard-code vendor, settlement month, settlement description, external agent, amounts, or internal comments.
+- Runtime params must stay business-level. Do not collapse them back into a generic `input` field.
 - Candidate items must be reviewable before creation. If the UI cannot expose selected item evidence, the pack is PARTIAL.
 - Auto mode may skip simple continue prompts, but must not skip environment checks, item review, or final create approval.
 - Action code must call `SapSrmAdapter.createSettlement`; it must not import SRM Page Object classes directly.

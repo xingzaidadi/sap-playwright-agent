@@ -34,4 +34,5 @@ This is an irreversible change-flow Recording Pack. It must remain in review/dry
 - Put waits and success evidence in wait-evidence.json.
 - Do not copy old YAML page actions directly into production Flow.
 - The generated draft should map to `SapSrmAdapter.createSettlement`.
+- The generated draft must use explicit business params: `vendor`, `company_code`, `purchasing_org`, `currency`, `settlement_desc`, `year_month`, and optional `external_agent`.
 - The final create action is irreversible and must stay approval-gated.

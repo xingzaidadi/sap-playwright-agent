@@ -2,7 +2,13 @@
 import { SrmCreateSettlementPage } from './page-object-method.js'
 
 export interface SrmCreateSettlementParams {
-  input: string
+  vendor: string
+  company_code: string
+  purchasing_org: string
+  currency: string
+  settlement_desc: string
+  year_month: string
+  external_agent?: string
 }
 
 export interface SrmCreateSettlementResult {

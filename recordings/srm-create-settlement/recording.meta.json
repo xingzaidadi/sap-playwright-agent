@@ -11,5 +11,49 @@
   "riskLevel": "irreversible",
   "requiresHumanApproval": true,
   "adapterMethod": "createSettlement",
+  "params": [
+    {
+      "name": "vendor",
+      "type": "string",
+      "required": true,
+      "description": "Supplier or vendor identifier used to query eligible settlement items."
+    },
+    {
+      "name": "company_code",
+      "type": "string",
+      "required": true,
+      "description": "Company code for the settlement query."
+    },
+    {
+      "name": "purchasing_org",
+      "type": "string",
+      "required": true,
+      "description": "Purchasing organization for the settlement query."
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "required": true,
+      "description": "Settlement currency."
+    },
+    {
+      "name": "settlement_desc",
+      "type": "string",
+      "required": true,
+      "description": "Settlement document description or business label."
+    },
+    {
+      "name": "year_month",
+      "type": "string",
+      "required": true,
+      "description": "Settlement period in approved business format, for example YYYYMM."
+    },
+    {
+      "name": "external_agent",
+      "type": "string",
+      "required": false,
+      "description": "External agent value when required by currency or SRM business rule."
+    }
+  ],
   "createdAt": "2026-05-09T09:26:13.380Z"
 }

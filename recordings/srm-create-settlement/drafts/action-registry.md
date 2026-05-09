@@ -25,7 +25,13 @@ registry.register({
   async execute({ getAdapter, resolvedParams }) {
     const sapSrm = getAdapter<SapSrmAdapter>(SAP_SRM_ADAPTER)
     return await sapSrm.createSettlement({
-      input: resolvedParams.input as string,
+      vendor: resolvedParams.vendor as string,
+      company_code: resolvedParams.company_code as string,
+      purchasing_org: resolvedParams.purchasing_org as string,
+      currency: resolvedParams.currency as string,
+      settlement_desc: resolvedParams.settlement_desc as string,
+      year_month: resolvedParams.year_month as string,
+      external_agent: resolvedParams.external_agent as string,
     })
   },
 })

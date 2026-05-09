@@ -264,6 +264,74 @@ describe('recording-pack', () => {
     })
   })
 
+  it('uses explicit create settlement params in generated drafts', () => {
+    const projectRoot = makeTempRoot()
+    createRecordingPack('srm-create-settlement', {
+      projectRoot,
+      domain: 'sap-srm',
+      system: 'SAP SRM Portal',
+      riskLevel: 'irreversible',
+      requiresHumanApproval: true,
+      adapterMethod: 'createSettlement',
+      params: [
+        { name: 'vendor', type: 'string', required: true },
+        { name: 'company_code', type: 'string', required: true },
+        { name: 'purchasing_org', type: 'string', required: true },
+        { name: 'currency', type: 'string', required: true },
+        { name: 'settlement_desc', type: 'string', required: true },
+        { name: 'year_month', type: 'string', required: true },
+        { name: 'external_agent', type: 'string', required: false },
+      ],
+    })
+
+    const recordingDir = join(projectRoot, 'recordings', 'srm-create-settlement')
+    compileRecordingPack(recordingDir)
+
+    const flowDraft = parseYaml(readFileSync(join(recordingDir, 'drafts', 'flow.yaml'), 'utf-8'))
+    expect(flowDraft.params.map((param: { name: string }) => param.name)).toEqual([
+      'vendor',
+      'company_code',
+      'purchasing_org',
+      'currency',
+      'settlement_desc',
+      'year_month',
+      'external_agent',
+    ])
+    expect(flowDraft.steps[0].params).toEqual({
+      vendor: '{{vendor}}',
+      company_code: '{{company_code}}',
+      purchasing_org: '{{purchasing_org}}',
+      currency: '{{currency}}',
+      settlement_desc: '{{settlement_desc}}',
+      year_month: '{{year_month}}',
+      external_agent: '{{external_agent}}',
+    })
+
+    const plan = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan.json'), 'utf-8'))
+    expect(plan.action.params).toEqual([
+      'vendor',
+      'company_code',
+      'purchasing_org',
+      'currency',
+      'settlement_desc',
+      'year_month',
+      'external_agent',
+    ])
+    expect(plan.adapter.capability).toMatchObject({
+      declared: true,
+      name: 'createSettlement',
+      status: 'implemented',
+    })
+
+    const actionDraft = readFileSync(join(recordingDir, 'drafts', 'action-registry.md'), 'utf-8')
+    expect(actionDraft).toContain('vendor: resolvedParams.vendor as string')
+    expect(actionDraft).toContain('external_agent: resolvedParams.external_agent as string')
+
+    const adapterDraft = readFileSync(join(recordingDir, 'drafts', 'adapter-method.ts'), 'utf-8')
+    expect(adapterDraft).toContain('vendor: string')
+    expect(adapterDraft).toContain('external_agent?: string')
+  })
+
   it('uses explicit recording params in generated Flow and code drafts', () => {
     const projectRoot = makeTempRoot()
     createRecordingPack('srm-confirm-settlement', {

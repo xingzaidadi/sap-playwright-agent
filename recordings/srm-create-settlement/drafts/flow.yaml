@@ -6,15 +6,45 @@ metadata:
   adapter: sap-srm
   risk: irreversible
 params:
-  - name: input
+  - name: vendor
     type: string
     required: true
-    description: Replace with real business input fields.
+    description: Supplier or vendor identifier used to query eligible settlement items.
+  - name: company_code
+    type: string
+    required: true
+    description: Company code for the settlement query.
+  - name: purchasing_org
+    type: string
+    required: true
+    description: Purchasing organization for the settlement query.
+  - name: currency
+    type: string
+    required: true
+    description: Settlement currency.
+  - name: settlement_desc
+    type: string
+    required: true
+    description: Settlement document description or business label.
+  - name: year_month
+    type: string
+    required: true
+    description: Settlement period in approved business format, for example YYYYMM.
+  - name: external_agent
+    type: string
+    required: false
+    description: External agent value when required by currency or SRM business rule.
 steps:
   - id: srm_create_settlement
     action: srm_create_settlement
     params:
-      input: "{{input}}"
+      vendor: "{{vendor}}"
+      company_code: "{{company_code}}"
+      purchasing_org: "{{purchasing_org}}"
+      currency: "{{currency}}"
+      settlement_desc: "{{settlement_desc}}"
+      year_month: "{{year_month}}"
+      external_agent: "{{external_agent}}"
     expect:
       - text: SRM settlement creation evidence is captured with settlement number and
           success message after explicit human approval.

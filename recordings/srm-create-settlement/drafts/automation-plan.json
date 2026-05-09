@@ -23,7 +23,13 @@
   "action": {
     "name": "srm_create_settlement",
     "params": [
-      "input"
+      "vendor",
+      "company_code",
+      "purchasing_org",
+      "currency",
+      "settlement_desc",
+      "year_month",
+      "external_agent"
     ],
     "maps_to_adapter_method": "createSettlement"
   },
