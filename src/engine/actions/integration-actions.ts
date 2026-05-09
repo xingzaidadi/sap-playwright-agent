@@ -1,7 +1,6 @@
 import { logger } from '../../utils/logger.js'
 import { ToolskitAPI } from '../../utils/toolskit-api.js'
-import { SRMPage } from '../../sap/pages/srm-page.js'
-import { SAP_SRM_ADAPTER } from '../adapters/index.js'
+import { SAP_SRM_ADAPTER, type SapSrmAdapter } from '../adapters/index.js'
 import type { ActionRegistry } from './registry.js'
 
 export function registerIntegrationActions(registry: ActionRegistry): void {
@@ -30,7 +29,7 @@ export function registerIntegrationActions(registry: ActionRegistry): void {
     .register({
       name: 'srm_operation',
       async execute({ getAdapter, resolvedParams }) {
-        const srm = getAdapter<SRMPage>(SAP_SRM_ADAPTER)
+        const srm = getAdapter<SapSrmAdapter>(SAP_SRM_ADAPTER)
         const op = resolvedParams.operation as string
 
         switch (op) {

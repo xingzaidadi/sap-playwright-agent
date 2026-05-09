@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "1.7"
+version: "1.8"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -13,6 +13,7 @@ changelog:
   "1.5": Added V1/V2/V3 status, fresh execution contract, evidence requirements, approval gate, read-only/change-flow split, and SRM experimental boundary.
   "1.6": Action Registry V1 is implemented; FlowRunner dispatches actions through registered core, SAP, and integration action modules.
   "1.7": Adapter Registry V1 is implemented; FlowRunner now depends on registered adapters instead of SAP page objects directly.
+  "1.8": SAP/SRM adapters now expose domain interfaces to actions; Page Objects stay behind adapters.
 ---
 
 # Web UI Automation Skill
@@ -44,7 +45,7 @@ V1 complete:
 V2 in progress:
   Run Context, Step Evidence, enhanced reports, SAP ECC primitives,
   read-only/change-flow split, approval gate, Action Registry V1,
-  and Adapter Registry V1 are in place.
+  Adapter Registry V1, and SAP/SRM adapter interfaces are in place.
   The next architecture step is expanding adapters beyond SAP/SRM samples.
 
 V3 not started:
@@ -193,6 +194,8 @@ Flow -> Action Registry -> Adapter -> Page Object -> Playwright
 Do not let Flow depend on Page Object directly. Do not expose selectors, iframe paths, or DOM details in Flow unless it is a temporary exploratory draft.
 
 Adapter Registry V1 lives in `src/engine/adapters/*`. FlowRunner should not import SAP/SRM page objects directly. Actions should call `getAdapter(adapterName)` and then invoke domain methods on that adapter.
+
+Actions must depend on adapter interfaces such as `SapEccAdapter` or `SapSrmAdapter`, not on Page Object classes such as `SAPBasePage` or `SRMPage`. Page Object imports belong behind adapter implementations.
 
 ### Page Object
 
