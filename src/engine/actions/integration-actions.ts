@@ -40,15 +40,7 @@ export function registerIntegrationActions(registry: ActionRegistry): void {
               (resolvedParams.file_path as string) || ''
             )
           case 'createSettlement':
-            return await srm.createSettlement({
-              vendor: resolvedParams.vendor as string,
-              companyCode: resolvedParams.company_code as string,
-              purchasingOrg: resolvedParams.purchasing_org as string,
-              currency: resolvedParams.currency as string,
-              settlementDesc: resolvedParams.settlement_desc as string,
-              yearMonth: resolvedParams.year_month as string,
-              externalAgent: resolvedParams.external_agent as string,
-            })
+            return await srm.createSettlement(createSettlementParams(resolvedParams))
           case 'confirmAndGenerateInvoice':
             return await srm.confirmAndGenerateInvoice({
               settlementNumber: resolvedParams.settlement_number as string,
@@ -62,4 +54,23 @@ export function registerIntegrationActions(registry: ActionRegistry): void {
         }
       },
     })
+    .register({
+      name: 'srm_create_settlement',
+      async execute({ getAdapter, resolvedParams }) {
+        const srm = getAdapter<SapSrmAdapter>(SAP_SRM_ADAPTER)
+        return await srm.createSettlement(createSettlementParams(resolvedParams))
+      },
+    })
+}
+
+function createSettlementParams(resolvedParams: Record<string, unknown>) {
+  return {
+    vendor: resolvedParams.vendor as string,
+    companyCode: resolvedParams.company_code as string,
+    purchasingOrg: resolvedParams.purchasing_org as string,
+    currency: resolvedParams.currency as string,
+    settlementDesc: resolvedParams.settlement_desc as string,
+    yearMonth: resolvedParams.year_month as string,
+    externalAgent: resolvedParams.external_agent as string,
+  }
 }

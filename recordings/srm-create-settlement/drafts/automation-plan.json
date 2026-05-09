@@ -33,7 +33,7 @@
     "capability": {
       "declared": true,
       "name": "createSettlement",
-      "action": "srm_operation",
+      "action": "srm_create_settlement",
       "method": "createSettlement",
       "risk": "irreversible",
       "status": "implemented",

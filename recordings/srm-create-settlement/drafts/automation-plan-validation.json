@@ -1,11 +1,5 @@
 {
   "valid": true,
   "errors": [],
-  "warnings": [
-    {
-      "level": "warning",
-      "path": "adapter.capability.action",
-      "message": "Adapter capability action differs from plan.action.name; confirm the action mapping during review."
-    }
-  ]
+  "warnings": []
 }

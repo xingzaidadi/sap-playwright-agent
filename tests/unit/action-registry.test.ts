@@ -17,9 +17,52 @@ describe('ActionRegistry', () => {
       'press_key',
       'run_sub_flow',
       'screenshot',
+      'srm_create_settlement',
       'srm_operation',
       'wait',
     ])
+  })
+
+  it('maps srm_create_settlement to the SRM adapter createSettlement method', async () => {
+    const registry = createDefaultActionRegistry()
+    const createSettlement = async (params: unknown) => params
+
+    const result = await registry.get('srm_create_settlement')?.execute({
+      page: {} as never,
+      step: { id: 'create', action: 'srm_create_settlement' },
+      resolvedParams: {
+        vendor: 'VENDOR',
+        company_code: '1000',
+        purchasing_org: '1000',
+        currency: 'CNY',
+        settlement_desc: 'MONTHLY',
+        year_month: '202605',
+        external_agent: 'AGENT',
+      },
+      runContext: null,
+      params: {},
+      outputs: {},
+      getAdapter: () => ({ createSettlement }),
+      evaluateCondition: () => true,
+      runSubFlow: async () => ({
+        flowName: 'noop',
+        success: true,
+        outputs: {},
+        steps: [],
+        screenshots: [],
+        duration: 0,
+      }),
+    })
+
+    expect(result).toEqual({
+      vendor: 'VENDOR',
+      companyCode: '1000',
+      purchasingOrg: '1000',
+      currency: 'CNY',
+      settlementDesc: 'MONTHLY',
+      yearMonth: '202605',
+      externalAgent: 'AGENT',
+    })
   })
 
   it('rejects duplicate action names', () => {

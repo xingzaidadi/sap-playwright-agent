@@ -18,7 +18,7 @@ Status: `ready_for_review`
 | Check | Status | Evidence |
 |-------|--------|----------|
 | flow-contract-valid | pass | Flow contract valid=true, errors=0, warnings=0. |
-| automation-plan-valid | pass | Automation plan errors=0, warnings=1. |
+| automation-plan-valid | pass | Automation plan errors=0, warnings=0. |
 | target-files-declared | pass | flows/srm-create-settlement.yaml, src/engine/actions/integration-actions.ts, src/engine/adapters/sap-srm-adapter.ts, src/sap/pages/srm-create-settlement-page.ts |
 | action-name-reviewed | manual_review | Review Flow action "srm_create_settlement" before adding it to src/engine/actions/integration-actions.ts. |
 | adapter-method-reviewed | manual_review | Review Adapter method "createSettlement" and return evidence contract before production use. |

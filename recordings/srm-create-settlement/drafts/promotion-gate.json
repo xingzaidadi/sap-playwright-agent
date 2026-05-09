@@ -22,7 +22,7 @@
     {
       "id": "automation-plan-valid",
       "status": "pass",
-      "evidence": "Automation plan errors=0, warnings=1."
+      "evidence": "Automation plan errors=0, warnings=0."
     },
     {
       "id": "target-files-declared",

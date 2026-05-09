@@ -69,7 +69,7 @@ export const SAP_SRM_CAPABILITIES: AdapterCapability[] = [
   },
   {
     name: 'createSettlement',
-    action: 'srm_operation',
+    action: 'srm_create_settlement',
     method: 'createSettlement',
     risk: 'irreversible',
     status: 'implemented',
