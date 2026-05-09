@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "1.5"
+version: "1.6"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -11,6 +11,7 @@ changelog:
   "1.3": Introduced Core + Adapter architecture and Page Object boundaries.
   "1.4": Added Recording Pack CLI guidance.
   "1.5": Added V1/V2/V3 status, fresh execution contract, evidence requirements, approval gate, read-only/change-flow split, and SRM experimental boundary.
+  "1.6": Action Registry V1 is implemented; FlowRunner dispatches actions through registered core, SAP, and integration action modules.
 ---
 
 # Web UI Automation Skill
@@ -41,8 +42,8 @@ V1 complete:
 
 V2 in progress:
   Run Context, Step Evidence, enhanced reports, SAP ECC primitives,
-  read-only/change-flow split, and approval gate are in place.
-  Action Registry / Adapter Registry are still the next architecture step.
+  read-only/change-flow split, approval gate, and Action Registry V1 are in place.
+  Adapter Registry is still the next architecture step.
 
 V3 not started:
   SRM is the second Adapter candidate, but current SRM drafts are experimental.
@@ -51,7 +52,7 @@ V3 not started:
 Current framing:
 
 ```text
-Core = Recording Pack + Flow Engine + Run Context + Evidence Report + Approval Gate
+Core = Recording Pack + Flow Engine + Action Registry + Run Context + Evidence Report + Approval Gate
 SAP ECC = first real Adapter sample
 SRM = second Adapter candidate / experimental area
 Business Flow = reusable sample or workflow asset, not the generic core itself
@@ -169,9 +170,7 @@ Core handles capabilities that should work across SAP, SRM, OA, CRM, and generic
 - dry-run
 - approval gate
 - AI Diagnose input construction
-- Action Registry, once implemented
-
-If Action Registry is not yet implemented in code, do not pretend it exists. Say it is the next V2 closure step.
+- Action Registry V1
 
 ### Adapter
 
@@ -185,7 +184,7 @@ Adapter handles system-specific domain behavior:
 Correct dependency:
 
 ```text
-Flow -> Action Registry / FlowRunner -> Adapter -> Page Object -> Playwright
+Flow -> Action Registry -> Adapter -> Page Object -> Playwright
 ```
 
 Do not let Flow depend on Page Object directly. Do not expose selectors, iframe paths, or DOM details in Flow unless it is a temporary exploratory draft.
@@ -252,14 +251,14 @@ Process:
 1. Identify the business action.
 2. Read existing Adapter / Page Object code.
 3. Add or reuse an Adapter method.
-4. Register or route an action through the current execution layer.
+4. Register an action in `src/engine/actions/*`.
 5. Add a YAML Flow.
 6. Run dry-run.
 7. Run real execution only when risk is acceptable.
 8. Save report / trace / screenshot evidence.
 ```
 
-If Action Registry code is not yet implemented, route through current `FlowRunner` action dispatch. If the user asks to close the architecture gap, implement Action Registry V1 first.
+Action Registry V1 keeps existing YAML action names compatible. When adding a new reusable action, register it in the relevant action module instead of adding a new switch branch to `FlowRunner`.
 
 ### One-off Scripts Are Exploratory Only
 
