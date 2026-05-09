@@ -1,5 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
+import { stringify as stringifyYaml } from 'yaml'
+import { validateFlowContract } from '../engine/flow-loader.js'
+import type { FlowDefinition, FlowRiskLevel, FlowStep } from '../engine/types.js'
 
 export type RecordingRiskLevel = 'read-only' | 'write' | 'irreversible'
 
@@ -112,15 +115,18 @@ export function compileRecordingPack(
   const actionName = toActionName(flowName)
   const pageClassName = toPascalCase(flowName)
   const adapterName = `${meta.domain || DEFAULT_DOMAIN}Adapter`
+  const flowDraft = buildFlowDraft(meta, actionName)
+  const contract = validateFlowContract(flowDraft)
 
   mkdirSync(join(recordingDir, 'drafts'), { recursive: true })
 
   const files: Record<string, string> = {
-    'drafts/flow.yaml': flowDraftTemplate(meta, actionName),
+    'drafts/flow.yaml': flowDraftTemplate(flowDraft),
+    'drafts/flow-contract.json': `${JSON.stringify(contract, null, 2)}\n`,
     'drafts/action-registry.md': actionRegistryDraftTemplate(meta, actionName, adapterName),
     'drafts/adapter-method.ts': adapterMethodDraftTemplate(meta, actionName, pageClassName),
     'drafts/page-object-method.ts': pageObjectDraftTemplate(meta, actionName, pageClassName),
-    'drafts/review-checklist.md': reviewChecklistTemplate(meta, actionName),
+    'drafts/review-checklist.md': reviewChecklistTemplate(meta, actionName, contract),
   }
 
   return writeFiles(recordingDir, files, options.force ?? false)
@@ -286,21 +292,73 @@ These drafts are not production automation. Review the generated Flow, Action Re
 `
 }
 
-function flowDraftTemplate(meta: RecordingMeta, actionName: string): string {
-  return `name: ${meta.name}
-description: ${quoteYaml(meta.goal)}
-params:
-  - name: input
-    required: true
-    description: Replace with real business input fields.
-steps:
-  - id: ${actionName}
-    action: ${actionName}
-    params:
-      input: "{{input}}"
-    expected:
-      evidence: ${quoteYaml(meta.expectedResult)}
-`
+function buildFlowDraft(meta: RecordingMeta, actionName: string): FlowDefinition {
+  const risk = toFlowRiskLevel(meta.riskLevel)
+  const step: FlowStep = {
+    id: actionName,
+    action: actionName,
+    params: {
+      input: '{{input}}',
+    },
+    expect: [
+      {
+        text: meta.expectedResult,
+      },
+    ],
+  }
+
+  if (meta.requiresHumanApproval || risk === 'irreversible') {
+    step.requires_approval = true
+    step.approval_reason = 'Review the recording and confirm this business operation before execution.'
+  }
+
+  return {
+    name: meta.name,
+    description: meta.goal,
+    metadata: {
+      schema_version: 'flow-v1',
+      adapter: inferAdapterName(meta),
+      risk,
+    },
+    params: [
+      {
+        name: 'input',
+        type: 'string',
+        required: true,
+        description: 'Replace with real business input fields.',
+      },
+    ],
+    steps: [step],
+  }
+}
+
+function flowDraftTemplate(flow: FlowDefinition): string {
+  return stringifyYaml(flow)
+}
+
+function inferAdapterName(meta: RecordingMeta): string {
+  const domain = meta.domain.toLowerCase()
+  const system = meta.system.toLowerCase()
+
+  if (domain.includes('srm') || system.includes('srm')) {
+    return 'sap-srm'
+  }
+  if (domain.includes('sap') || system.includes('sap')) {
+    return 'sap-ecc'
+  }
+
+  return domain.replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '') || 'generic-web'
+}
+
+function toFlowRiskLevel(riskLevel: RecordingRiskLevel): FlowRiskLevel {
+  switch (riskLevel) {
+    case 'read-only':
+      return 'read_only'
+    case 'write':
+      return 'reversible_change'
+    case 'irreversible':
+      return 'irreversible'
+  }
 }
 
 function actionRegistryDraftTemplate(meta: RecordingMeta, actionName: string, adapterName: string): string {
@@ -378,7 +436,11 @@ export class ${pageClassName}Page {
 `
 }
 
-function reviewChecklistTemplate(meta: RecordingMeta, actionName: string): string {
+function reviewChecklistTemplate(
+  meta: RecordingMeta,
+  actionName: string,
+  contract: ReturnType<typeof validateFlowContract>
+): string {
   return `# Review Checklist: ${meta.name}
 
 ## Flow
@@ -386,6 +448,10 @@ function reviewChecklistTemplate(meta: RecordingMeta, actionName: string): strin
 - [ ] Flow step uses business action name: \`${actionName}\`.
 - [ ] Flow params contain business data, not selectors.
 - [ ] Flow has clear success evidence.
+- [ ] Flow metadata declares schema version, adapter, and risk.
+- [ ] Flow contract reviewed: ${contract.valid ? 'valid' : 'has errors'}.
+- [ ] Flow contract warnings reviewed: ${contract.warnings.length}.
+- [ ] Flow contract errors resolved: ${contract.errors.length}.
 
 ## Action Registry
 
@@ -422,8 +488,4 @@ function toPascalCase(flowName: string): string {
     .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
-}
-
-function quoteYaml(value: string): string {
-  return JSON.stringify(value)
 }

@@ -5,6 +5,7 @@ Recording Pack is the capture-layer input format for this automation framework.
 It is not traditional RPA-style record-and-playback. A Recording Pack captures SOP, manual operation notes, screenshots, a11y tree snapshots, selector candidates, wait evidence, and expected results, then uses those materials to draft:
 
 - Flow YAML
+- Flow Contract validation result
 - Action Registry entries
 - Adapter methods
 - Page Object methods
@@ -29,6 +30,7 @@ npm run compile-recording -- recordings/query-po-history
 The compiler creates:
 
 - `drafts/flow.yaml`
+- `drafts/flow-contract.json`
 - `drafts/action-registry.md`
 - `drafts/adapter-method.ts`
 - `drafts/page-object-method.ts`
@@ -69,7 +71,7 @@ Use recording as capture, not playback:
 ```text
 SOP / screenshots / manual recording / trace / a11y tree
   -> Recording Pack
-  -> Flow draft
+  -> Flow draft + Flow Contract validation
   -> Action draft
   -> Adapter draft
   -> Page Object draft

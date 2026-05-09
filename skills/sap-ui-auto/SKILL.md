@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "1.9"
+version: "2.0"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -15,6 +15,7 @@ changelog:
   "1.7": Adapter Registry V1 is implemented; FlowRunner now depends on registered adapters instead of SAP page objects directly.
   "1.8": SAP/SRM adapters now expose domain interfaces to actions; Page Objects stay behind adapters.
   "1.9": Flow Contract V1 metadata and validation clarify adapter ownership, risk level, approval gates, and page-detail boundaries.
+  "2.0": Recording Compiler now emits Flow Contract metadata and validation artifacts for generated Flow drafts.
 ---
 
 # Web UI Automation Skill
@@ -46,7 +47,8 @@ V1 complete:
 V2 in progress:
   Run Context, Step Evidence, enhanced reports, SAP ECC primitives,
   read-only/change-flow split, approval gate, Action Registry V1,
-  Adapter Registry V1, SAP/SRM adapter interfaces, and Flow Contract V1 are in place.
+  Adapter Registry V1, SAP/SRM adapter interfaces, Flow Contract V1,
+  and Recording Compiler contract validation are in place.
   The next architecture step is expanding adapters beyond SAP/SRM samples.
 
 V3 not started:
@@ -151,7 +153,8 @@ Recording Pack is for capture, not replay. Capture:
 Generated drafts are review inputs:
 
 ```text
-Flow draft
+Flow draft with Flow Contract metadata
+Flow Contract validation result
 Action Registry draft
 Adapter method draft
 Page Object draft
@@ -159,6 +162,8 @@ review checklist
 ```
 
 If key evidence is missing, return `PARTIAL` or `BLOCKED` and explain what evidence is missing.
+
+Compiled recordings should create `drafts/flow.yaml` and `drafts/flow-contract.json`. The draft Flow must include `metadata.schema_version`, `metadata.adapter`, and `metadata.risk` before it is considered ready for review.
 
 ## Architecture Boundaries
 
