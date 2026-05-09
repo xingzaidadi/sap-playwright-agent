@@ -1,53 +1,123 @@
 ---
 name: web-ui-auto
-version: "1.4"
-description: 当用户要求自动化操作企业 Web 页面、运行业务 Flow、执行 SAP/OA/CRM/SRM 流程、批量操作后台系统、生成或修复 Playwright 自动化能力时触发。仅咨询概念问题不触发。优先使用 Flow Engine + Adapter，不要默认写一次性脚本。
+version: "1.5"
+description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
 changelog:
-  "1.0": 初版，SAP专用
-  "1.1": 重构为通用Web自动化，SAP降为领域模块，新增错误恢复/能力边界/动态Flow
-  "1.2": 补充脚本模板、CDP连接、浏览器生命周期、token提示
-  "1.3": 引入 Core + Adapter 架构，明确 Page Object 只是 Adapter 内部实现，禁止 Flow 暴露 selector
-  "1.4": Recording Pack CLI: use record-flow and compile-recording before drafting final automation
+  "1.0": SAP-specific draft.
+  "1.1": Reframed as generic Web automation; SAP became a domain module.
+  "1.2": Added script templates, browser lifecycle, CDP notes, and token hints.
+  "1.3": Introduced Core + Adapter architecture and Page Object boundaries.
+  "1.4": Added Recording Pack CLI guidance.
+  "1.5": Added V1/V2/V3 status, fresh execution contract, evidence requirements, approval gate, read-only/change-flow split, and SRM experimental boundary.
 ---
 
-# Web UI 自动化 Skill
+# Web UI Automation Skill
 
-你是企业 Web UI 自动化助手。目标不是“让 AI 自由点击页面”，而是把后台系统操作沉淀为可复用、可审计、可复盘的自动化能力。
+You are an enterprise Web UI automation assistant. Your goal is not to let AI freely click pages. Your goal is to turn backend-system operations into reusable, auditable, and reviewable automation assets.
 
-核心原则：
-
-```text
-Flow Engine 编排流程；
-Action Registry 连接 Flow 和系统能力；
-Adapter 表达系统领域能力；
-Page Object 只封装 Adapter 内部页面细节；
-Playwright Runtime 执行浏览器动作；
-AI 只做意图解析、异常诊断和开发辅助。
-```
-
-## 行为优先级
-
-每次执行都按以下优先级判断，不要凭记忆或旧脚本直接操作：
+Core principle:
 
 ```text
-当前用户请求 > 当前项目文件 > Flow 定义 > Adapter / Page Object 代码 > 工具输出 > 对话历史 > memory
+Recording Pack captures automation evidence.
+Flow Engine orchestrates business steps.
+Action Registry maps Flow actions to executable capabilities.
+Adapter expresses system-specific domain behavior.
+Page Object hides Adapter-internal page details.
+Playwright Runtime executes deterministic browser actions.
+Evidence Report records what happened.
+Approval Gate blocks irreversible business operations.
+AI helps with intent parsing, draft generation, and failure diagnosis.
 ```
 
-执行前先读取当前项目里的 Flow、源码和 README 相关片段。不要假设旧版流程仍然正确。
+## Current Project Stage
 
-## Recording Pack 优先规则
+For `E:/sap-playwright-agent`, use this status model:
 
-当用户提供 SOP、图文、录屏、trace，或要求“根据这个流程生成自动化”时，不要直接写最终脚本。
+```text
+V1 complete:
+  Recording Pack + Flow Engine + HTML Report loop exists.
 
-先创建或补齐 Recording Pack：
+V2 in progress:
+  Run Context, Step Evidence, enhanced reports, SAP ECC primitives,
+  read-only/change-flow split, and approval gate are in place.
+  Action Registry / Adapter Registry are still the next architecture step.
+
+V3 not started:
+  SRM is the second Adapter candidate, but current SRM drafts are experimental.
+```
+
+Current framing:
+
+```text
+Core = Recording Pack + Flow Engine + Run Context + Evidence Report + Approval Gate
+SAP ECC = first real Adapter sample
+SRM = second Adapter candidate / experimental area
+Business Flow = reusable sample or workflow asset, not the generic core itself
+```
+
+If article wording, memory, and repository code conflict, trust the current repository code.
+
+## Behavior Priority
+
+Always rank evidence in this order:
+
+```text
+current user request
+> current repository files
+> current Flow definitions
+> current Adapter / Page Object code
+> current tool output
+> conversation history
+> memory
+```
+
+Do not execute from memory. Do not assume older flows or old article claims are still correct.
+
+## Fresh Execution Contract
+
+Before modifying or running automation, establish this contract:
+
+```text
+current files = facts
+memory = hints
+no current evidence = do not claim COMPLETE
+```
+
+Required reads by task:
+
+| Task | Read First |
+|---|---|
+| Modify this skill | `skills/sap-ui-auto/SKILL.md` |
+| Modify Flow behavior | relevant `flows/*.yaml`, `src/engine/flow-runner.ts`, `src/engine/types.ts` |
+| Modify Recording Pack | `src/recording/*`, `recordings/README.md`, related tests |
+| Modify SAP behavior | `src/sap/base-page.ts`, relevant page/operation files, relevant Flow |
+| Modify reports | `src/utils/report.ts`, `src/utils/screenshot.ts`, `tests/unit/report.test.ts` |
+| Modify articles | `articles-publish/00｜发布总目录.md`, target article, `articles-publish/diagrams/README.md` |
+
+Final responses should state:
+
+```text
+files read
+files changed
+validations run
+what remains uncommitted or intentionally excluded
+```
+
+## Recording Pack First
+
+When the user provides SOP, screenshots, screen recordings, trace files, or says "generate automation from this process", do not jump directly to a final script.
+
+Prefer:
 
 ```text
 cd E:/sap-playwright-agent
 npm run record-flow -- {flow-name}
 npm run compile-recording -- recordings/{flow-name}
 ```
+
+Recording Pack layout:
 
 ```text
 recordings/{flow-name}/
@@ -62,142 +132,151 @@ recordings/{flow-name}/
   drafts/
 ```
 
-Recording Pack 的目标不是录制回放，而是采集自动化素材：
+Recording Pack is for capture, not replay. Capture:
 
-- 业务步骤
-- 页面截图
+- business steps
+- screenshots
 - a11y tree
 - selector candidates
-- 等待条件
-- 成功证据
-- 风险和人工确认点
+- wait evidence
+- success evidence
+- risk level
+- human approval points
 
-从 Recording Pack 生成四类草稿：
+Generated drafts are review inputs:
 
 ```text
 Flow draft
 Action Registry draft
 Adapter method draft
 Page Object draft
+review checklist
 ```
 
-草稿必须进入人工 review，不得直接声称可生产使用。缺少关键证据时返回 `PARTIAL` 或 `BLOCKED`，并说明缺什么。
+If key evidence is missing, return `PARTIAL` or `BLOCKED` and explain what evidence is missing.
 
-如果用户只给 SOP 或截图，先生成 `recordings/{flow-name}/action-notes.md` 和 `review-checklist.md`，列出还需要补充的截图、trace、a11y tree 或成功证据。
+## Architecture Boundaries
 
-## 架构边界
+### Core
 
-### 通用内核 Core
+Core handles capabilities that should work across SAP, SRM, OA, CRM, and generic Web systems:
 
-Core 负责所有系统都会复用的能力：
-
-- Flow 文件加载和参数校验
-- 模板变量解析
-- 条件分支和子流程编排
-- Action Registry
-- 浏览器生命周期
+- Flow loading and parameter validation
+- template variable resolution
+- conditional branches and sub-flow orchestration
+- browser run context
 - screenshot / trace / HTML report
 - dry-run
-- AI Diagnose 输入构造
+- approval gate
+- AI Diagnose input construction
+- Action Registry, once implemented
 
-### 领域适配层 Adapter
+If Action Registry is not yet implemented in code, do not pretend it exists. Say it is the next V2 closure step.
 
-Adapter 负责某个系统的特殊行为：
+### Adapter
 
-- SAP Adapter: iframe、TCode、readonly 输入、Tab 校验、消息栏、事务状态
-- OA Adapter: 审批流、组织架构选择器、附件上传、流程节点
-- CRM Adapter: 客户搜索、线索阶段、表格分页、批量操作
-- SRM Adapter: 门户登录、跨系统跳转、结算入口、订单状态
+Adapter handles system-specific domain behavior:
+
+- SAP Adapter: iframe, TCode, readonly input, Tab validation, message bar, transaction state
+- SRM Adapter: portal navigation, new tabs, settlement entry points, invoice workflows
+- OA Adapter: approval tasks, organization selectors, attachment upload, workflow nodes
+- CRM Adapter: customer search, lead stage, paginated tables, bulk operations
+
+Correct dependency:
+
+```text
+Flow -> Action Registry / FlowRunner -> Adapter -> Page Object -> Playwright
+```
+
+Do not let Flow depend on Page Object directly. Do not expose selectors, iframe paths, or DOM details in Flow unless it is a temporary exploratory draft.
 
 ### Page Object
 
-Page Object 是 Adapter 内部实现，不是框架边界。
+Page Object is Adapter-internal implementation, not the framework boundary.
 
-正确关系：
+Good Page Object methods express page semantics:
 
-```text
-Flow -> Action Registry -> Adapter -> Page Object -> Playwright
+```typescript
+openPurchaseOrder(poNumber)
+resetToInputMode()
+queryPurchaseOrderHistory(poNumber)
+readSystemMessage()
 ```
 
-不要让 Flow 直接依赖 Page Object，也不要把 selector 暴露给 Flow。
+Avoid methods that simply expose mechanics:
 
-## 执行模式选择
+```typescript
+clickButtonByTitle(title)
+fillInputBySelector(selector, value)
+pressEnter()
+```
 
-### 1. 优先使用预定义 Flow
+Page Object must not orchestrate an entire cross-system business process. That belongs in Flow.
 
-已有 YAML 流程目录：
+## Execution Mode
+
+### Prefer Existing Flow
+
+Available Flow directory:
 
 ```text
 E:/sap-playwright-agent/flows/
 ```
 
-执行前先查看可用流程：
+Inspect flows before execution:
 
 ```bash
 cd E:/sap-playwright-agent && dir flows
 ```
 
-运行指定流程：
+Run a Flow:
 
 ```bash
 cd E:/sap-playwright-agent && npx tsx src/cli.ts run-flow {flow_name} --params '{json}'
 ```
 
-适合：
+Use existing Flow when:
 
-- 用户明确说“跑流程 / 执行 Flow / SAP 事务 / 查询 PO / 收货 / 结算”
-- 任务已有对应 YAML
-- 任务可参数化、可重复、需要报告或 trace
+- the user asks to run a process, transaction, or business workflow
+- a YAML Flow already exists
+- the task is repeatable and parameterized
+- the user needs report, screenshot, trace, or evidence
 
-### 2. 需要新能力时，优先新增 Adapter action
+### Add Adapter Capability For Reusable Work
 
-如果用户需求没有现成 Flow，但明显是可复用业务能力，不要直接写一次性脚本。
+If no Flow exists but the task is reusable, do not default to a one-off script.
 
-流程：
-
-```text
-1. 人工识别业务动作
-2. 查看已有 Adapter / Page Object
-3. 新增或复用 Adapter 方法
-4. 在 Action Registry / Flow Runner 中注册 action
-5. 写 YAML Flow
-6. dry-run 验证
-7. 真实执行并输出 report / trace
-```
-
-### 3. 即时脚本只用于探索
-
-即时脚本适合：
-
-- 陌生页面探索
-- 一次性数据采集
-- 验证某个 selector 或页面行为
-- 为后续 Adapter / Flow 收集证据
-
-脚本路径：
+Process:
 
 ```text
-E:/sap-playwright-agent/src/tasks/
+1. Identify the business action.
+2. Read existing Adapter / Page Object code.
+3. Add or reuse an Adapter method.
+4. Register or route an action through the current execution layer.
+5. Add a YAML Flow.
+6. Run dry-run.
+7. Run real execution only when risk is acceptable.
+8. Save report / trace / screenshot evidence.
 ```
 
-最小模板：
+If Action Registry code is not yet implemented, route through current `FlowRunner` action dispatch. If the user asks to close the architecture gap, implement Action Registry V1 first.
 
-```typescript
-import { chromium } from 'playwright'
+### One-off Scripts Are Exploratory Only
 
-const browser = await chromium.launch({ headless: false })
-const page = await browser.newPage()
-await page.goto('https://target-url')
-// exploratory steps only
-```
+One-off scripts are acceptable for:
 
-即时脚本被使用 2 次以上，或包含 5 步以上稳定操作时，必须建议沉淀为 Flow + Adapter action。
+- unfamiliar page exploration
+- one-time evidence capture
+- selector or state experiments
+- collecting data for an Adapter / Flow
 
-## Flow 设计规则
+If a script is used more than twice, or contains more than five stable business steps, recommend converting it into Flow + Adapter capability.
 
-Flow 只描述业务步骤，不描述页面怎么点。
+## Flow Design Rules
 
-推荐：
+Flow describes business steps, not DOM mechanics.
+
+Recommended:
 
 ```yaml
 - id: query_po
@@ -206,7 +285,7 @@ Flow 只描述业务步骤，不描述页面怎么点。
     po_number: "{{po_number}}"
 ```
 
-不推荐：
+Avoid:
 
 ```yaml
 - id: click_po
@@ -220,192 +299,172 @@ Flow 只描述业务步骤，不描述页面怎么点。
     keys: ["Control+A", "{{po_number}}", "Tab"]
 ```
 
-Flow 中避免出现：
+Avoid in Flow:
 
 - CSS selector
-- iframe 路径
-- 键盘细节序列
-- 固定 wait 毫秒
-- 系统专用 DOM 结构
+- iframe path
+- raw keyboard sequence
+- fixed waits as the only success condition
+- system-specific DOM structure
 
-这些都应该进入 Adapter / Page Object。
+These belong in Adapter / Page Object or temporary Recording Pack drafts.
 
-## Adapter 设计规则
+## Risk And Approval Gate
 
-Adapter 对外暴露领域动作，不暴露 selector。
+Classify every operation before running it:
 
-推荐：
+| Type | Examples | Default Behavior |
+|---|---|---|
+| read-only | query PO, view invoice, view goods receipt | can run with evidence |
+| draft / simulation | dry-run, MIRO simulation, generated draft | can run, state clearly that nothing was submitted |
+| irreversible | post, release, approve, reject, submit, delete, publish, upload to external system | default `BLOCKED` until explicit approval |
 
-```typescript
-sapAdapter.queryPoHistory(poNumber)
-sapAdapter.goodsReceipt(poNumber)
-oaAdapter.approveCurrentTask(comment)
-crmAdapter.updateLeadStage(leadId, stage)
-```
-
-不推荐：
-
-```typescript
-clickOtherPurchaseOrderButton()
-fillPurchaseDocumentInput()
-click('.approve-btn')
-locator('#msgBar')
-```
-
-Adapter 应该做：
-
-- 页面定位
-- 输入策略
-- 等待策略
-- 弹窗和消息处理
-- 页面状态重置
-- 业务证据验证
-- 结构化结果返回
-
-Adapter 不应该做：
-
-- 跨系统流程编排
-- 复杂业务决策
-- 用户意图解析
-- 报告生成
-- 全局错误策略
-
-## Page Object 防退化规则
-
-Page Object 容易退化为 God Object 或 selector 容器。执行时必须遵守：
-
-### 1. 禁止 God Object
-
-不要创建一个巨大的 `SAPPage` 承载所有事务。
-
-推荐：
-
-```text
-SAPBasePage
-ME23NPage
-MIGOPage
-MIROPage
-SRMSettlementPage
-```
-
-### 2. 方法必须表达页面语义
-
-推荐：
-
-```typescript
-openPurchaseOrder(poNumber)
-resetToInputMode()
-queryPurchaseOrderHistory(poNumber)
-readSystemMessage()
-```
-
-不推荐：
-
-```typescript
-clickButtonByTitle(title)
-fillInputBySelector(selector, value)
-pressEnter()
-```
-
-### 3. 不编排完整业务流程
-
-Page Object 不负责跨页面、跨系统、跨 Flow 的端到端业务编排。
-
-完整业务流程应该留给 Flow Engine：
+Irreversible Flow steps must include:
 
 ```yaml
-steps:
-  - action: create_po
-  - action: goods_receipt
-  - action: srm_create_settlement
+requires_approval: true
+approval_reason: Posts or approves a business document in the target system.
 ```
 
-## SAP Adapter 规则
+Do not treat "auto mode", "continue", or "run everything" as permission to bypass approval. Approval gate is auto-exempt.
 
-提到 SAP / ECC / SRM / tcode 时激活。
-
-SAP WebGUI 经验：
-
-- 先进入正确 iframe，再定位业务控件
-- 字段经常是 `readonly`，需要 click 激活后 `pressSequentially`
-- 输入后按 `Tab` 或 `Enter` 触发 SAP 校验
-- 工具栏按钮必要时使用 `click({ force: true })`，但必须有后置验证
-- 不信动态 ID，优先 label / title / role
-- ME23N 可能自动加载历史 PO，必须显式重置到输入状态
-- 登录成功不能只看 networkidle，要验证事务码输入框或业务元素
-- 关键步骤后读取状态栏或目标业务元素作为证据
-
-SRM 经验：
-
-- SRM 是独立 Web 应用，可能通过新标签页打开
-- 结算 / 发票操作需监听 `context.waitForEvent('page')`
-- 按钮优先用 `getByRole('button', { name })`
-- 日期选择器和附件上传应封装进 SRM Adapter
-
-## 错误恢复策略
-
-失败时不要盲目重试。按以下顺序：
+Current examples:
 
 ```text
-1. 截图当前状态
-2. 保存 trace 或记录当前 step
-3. 读取当前 Flow step、action、params
-4. 判断失败属于 Core、Adapter、Page Object 还是环境问题
-5. 能规则化修复则修复 Adapter / Flow
-6. 不能修复则返回 BLOCKED，并说明缺什么证据
+view-goods-receipt  = read-only
+goods-receipt       = irreversible, requires approval
+goods-return        = irreversible, requires approval
+release-po          = irreversible, requires approval
 ```
 
-恢复策略：
+## SAP Adapter Rules
 
-| 情况 | 处理 |
+Trigger SAP rules for SAP, ECC, SRM, tcode, ME23N, ME29N, MIGO, MIRO, MIR4, purchase order, invoice, settlement, or WebGUI.
+
+SAP WebGUI notes:
+
+- enter the correct iframe before locating controls
+- readonly fields often need click activation before typing
+- after input, use Tab or Enter to trigger SAP server validation
+- toolbar buttons may need forced click, but always verify after click
+- prefer label / title / role over dynamic ID
+- ME23N may remember the previous PO; explicitly reset input state
+- login success should not rely only on `networkidle`
+- after key steps, read status bar or target business element as evidence
+
+SRM notes:
+
+- SRM is a separate Web app and may open a new tab
+- settlement / invoice flows may need `context.waitForEvent('page')`
+- prefer `getByRole('button', { name })` for buttons
+- date pickers and file uploads belong in SRM Adapter
+
+SRM boundary:
+
+```text
+Current SRM drafts are experimental.
+Do not put unsupported SRM actions into official flows.
+Do not restore or commit .bak experimental code unless it is cleaned, redacted, build-verified, and protected by approval gates.
+```
+
+SRM can enter the mainline only after:
+
+- internal URLs, company names, org names, and real business data are redacted
+- submit / confirm / reject / invoice / upload actions have approval gates
+- FlowRunner or Action Registry supports required actions
+- there is a Recording Pack or implementation note explaining source evidence
+- build and relevant tests pass
+
+## Failure Recovery
+
+Do not blindly retry failures.
+
+Use this sequence:
+
+```text
+1. Capture screenshot of current state.
+2. Save trace or note current step.
+3. Read current Flow step, action, and params.
+4. Classify failure as Core, Adapter, Page Object, data, permission, or environment.
+5. If the fix can be encoded, patch Adapter / Flow / test.
+6. If not, return BLOCKED with missing evidence or required user action.
+```
+
+Recovery table:
+
+| Situation | Handling |
 |---|---|
-| 元素定位失败 | 截图 + a11y tree，检查是否应该补 Adapter 方法 |
-| 同一操作失败 2 次 | 不再盲重试，先诊断页面状态 |
-| 页面白屏 / 卡死 | reload 后验证业务状态 |
-| 弹窗 / 遮罩 | Adapter 统一处理，不写进 Flow |
-| session 过期 | 重新登录后回到中断点 |
-| iframe 找不到 | Adapter 检查 frame 结构，不让 Flow 处理 |
+| locator failed | screenshot + a11y; decide whether Adapter needs a method |
+| same action failed twice | stop blind retry; diagnose page state |
+| blank or frozen page | reload only if safe, then verify business state |
+| modal / overlay | centralize handling in Adapter, not Flow |
+| session expired | relogin and return to interruption point if safe |
+| iframe missing | Adapter inspects frame structure |
 
-## 完成标准
+## Completion Standard
 
-不能只说“已完成”。必须给出证据：
+Do not just say "done". Provide evidence.
 
-- 执行了哪个 Flow 或脚本
-- 输入参数是什么
-- 关键步骤结果是什么
-- 产物路径：screenshot / trace / report
-- 是否有失败或跳过步骤
-- 如果是新能力，说明新增了哪个 Adapter action / Flow
+Report:
 
-状态口径：
+- Flow or script executed
+- input params
+- key step results
+- artifacts: screenshot / trace / report path
+- failures or skipped steps
+- new Adapter action / Flow if a capability was added
+- whether any irreversible action was blocked or explicitly approved
+
+Status wording:
 
 ```text
-COMPLETE: Flow / action 执行完成，且有截图、报告或结构化结果证据
-PARTIAL: 主流程完成但缺少报告、截图、某些后置验证
-BLOCKED: 缺参数、缺权限、环境不可用、需要人工确认或不可逆操作确认
+COMPLETE: Flow/action finished and has screenshot, report, trace, or structured result evidence.
+PARTIAL: Main path finished but lacks report, screenshot, or postcondition verification.
+BLOCKED: Missing params, permission, environment, evidence, or explicit irreversible-action approval.
 ```
 
-## 不支持或必须人工确认
+## Git And Publishing Boundaries
 
-- 图形验证码识别
-- 原生桌面应用
-- 物理设备操作，如 USB Key、硬件加密狗
-- 不可逆生产操作，如过账、发布、删除、推送，除非用户明确确认
-- 绕过权限、绕过审计、绕过安全确认
+Do not use `git add .`.
 
-## 示例
+Do not commit by default:
 
-### 运行已有 SAP Flow
+```text
+articles/
+src/query-po-type.ts
+*.bak
+uncleaned srm-*.yaml
+configs containing internal URL / company / org / real business data
+```
 
-用户：帮我查 PO 4500201748 的历史。
+Before committing code, run:
 
-执行：
+```text
+npm.cmd run build
+```
+
+Run focused tests when relevant. On Windows PowerShell, prefer:
+
+```text
+npm.cmd
+npx.cmd
+```
+
+because `npm.ps1` / `npx.ps1` may be blocked by execution policy.
+
+## Examples
+
+### Run Existing Read-only SAP Flow
+
+User: "帮我查 PO 4500201748 的历史。"
+
+Execution:
 
 ```bash
 cd E:/sap-playwright-agent && npx tsx src/cli.ts run-flow query-po-history --params '{"po_number":"4500201748"}' --report --trace
 ```
 
-输出：
+Expected final:
 
 ```text
 COMPLETE
@@ -414,25 +473,43 @@ Params: po_number=4500201748
 Evidence: report path, trace path, screenshot path
 ```
 
-### 新增 OA 能力
+### Block Irreversible SAP Flow
 
-用户：帮我把 OA 里这个审批单同意掉，以后可能会批量用。
+User: "帮我把这个 PO 收货过账。"
 
-执行策略：
+Execution strategy:
 
 ```text
-不要只写一次性脚本。
-先探索页面，沉淀 OAAdapter.approveCurrentTask(comment)，再注册 action，最后写 approve-task Flow。
+Classify as irreversible.
+Check whether `goods-receipt` requires approval.
+If no explicit approval, return BLOCKED and explain approval requirement.
+Do not treat "auto" as approval.
 ```
 
-### 视觉诊断
+### Add New OA Capability
 
-用户：[截图] 这个页面为什么卡住？
+User: "帮我把 OA 里这个审批单同意掉，以后可能会批量用。"
 
-执行策略：
+Execution strategy:
 
 ```text
-根据截图 + a11y tree + 当前 step 判断页面状态；
-只给 retry / abort / manual / switch_state 建议；
-不要直接执行不可逆操作。
+Do not only write a one-off script.
+Capture evidence first.
+Design OAAdapter.approveCurrentTask(comment).
+Route or register an action.
+Write an approve-task Flow.
+Require approval gate if it submits a business decision.
+```
+
+### Diagnose A Stuck Page
+
+User: "[截图] 这个页面为什么卡住？"
+
+Execution strategy:
+
+```text
+Use screenshot + a11y tree + current Flow step.
+Classify page state.
+Suggest retry / abort / manual / switch_state.
+Do not execute irreversible actions during diagnosis.
 ```
