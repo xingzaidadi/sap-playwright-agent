@@ -1,111 +1,36 @@
 name: srm-generate-invoice
+description: Generate an SAP estimated invoice from a reviewed SRM settlement document after explicit human approval.
 metadata:
   schema_version: flow-v1
   adapter: sap-srm
   risk: irreversible
-description: SRM 对账单管理 - 生成SAP暂估发票 + 对账单确认
-
 params:
   - name: settlement_number
     type: string
     required: true
-    description: 对账单号（如 9600003435）
+    description: Confirmed SRM settlement document number used to generate the SAP estimated invoice.
   - name: invoice_date
     type: string
-    description: 开票日期（YYYY.MM.DD），默认今天
+    required: true
+    description: Invoice date in business-approved format, for example YYYY.MM.DD.
   - name: posting_date
     type: string
-    description: 过账日期（YYYY.MM.DD），默认今天
+    required: true
+    description: Posting date in business-approved format, for example YYYY.MM.DD.
   - name: base_date
     type: string
-    description: 基准日期（YYYY.MM.DD），默认今天
-  - name: email
-    type: string
-    description: 确认邮件地址（对账单确认时发送）
-
+    required: true
+    description: Baseline date in business-approved format, for example YYYY.MM.DD.
 steps:
-  - id: navigate_srm
-    action: navigate_url
-    params:
-      url: "SRM_MANAGEMENT_URL"
-
-  - id: fill_query
-    action: fill_fields
-    params:
-      fields:
-        对账单单号: "{{settlement_number}}"
-
-  - id: query
-    action: click_button
-    params:
-      button: 查询
-
-  - id: wait_results
-    action: wait
-    params:
-      ms: "2000"
-
-  - id: confirm_settlement
-    action: click_button
-    params:
-      button: 对账单确认
-
-  - id: wait_confirm
-    action: wait
-    params:
-      ms: "2000"
-
-  - id: fill_email_if_needed
-    action: fill_fields
-    params:
-      fields:
-        其他邮件地址: "{{email}}"
-
-  - id: submit_confirm
-    action: click_button
-    params:
-      button: 提交
-    requires_approval: true
-    approval_reason: Submits SRM settlement confirmation and may change business state.
-
-  - id: wait_submit
-    action: wait
-    params:
-      ms: "2000"
-
   - id: generate_invoice
-    action: click_button
+    action: srm_generate_invoice
     params:
-      button: 生成SAP暂估发票
-    on_error: ai_diagnose
-
-  - id: fill_invoice_dialog
-    action: fill_fields
-    params:
-      fields:
-        开票日期: "{{invoice_date}}"
-        过账日期: "{{posting_date}}"
-        基准日期: "{{base_date}}"
-
-  - id: confirm_invoice
-    action: click_button
-    params:
-      button: 确定
+      settlement_number: "{{settlement_number}}"
+      invoice_date: "{{invoice_date}}"
+      posting_date: "{{posting_date}}"
+      base_date: "{{base_date}}"
+    expect:
+      - text: SAP invoice number or invoice generation success evidence is visible.
     requires_approval: true
-    approval_reason: Confirms SAP estimated invoice generation and may change business state.
-
-  - id: wait_invoice
-    action: wait
-    params:
-      ms: "3000"
-
-  - id: capture_result
-    action: extract_text
-    params:
-      element: sap_invoice_number
-    output: sap_invoice_number
-
-  - id: screenshot_result
-    action: screenshot
-    params:
-      name: srm-invoice-generated
+    approval_reason: Generating an SAP estimated invoice changes business state and must be reviewed before execution.
+    output: invoice_generation_result

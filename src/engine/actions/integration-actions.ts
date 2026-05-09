@@ -79,6 +79,18 @@ export function registerIntegrationActions(registry: ActionRegistry): void {
         })
       },
     })
+    .register({
+      name: 'srm_generate_invoice',
+      async execute({ getAdapter, resolvedParams }) {
+        const srm = getAdapter<SapSrmAdapter>(SAP_SRM_ADAPTER)
+        return await srm.generateInvoice({
+          settlementNumber: resolvedParams.settlement_number as string,
+          invoiceDate: resolvedParams.invoice_date as string,
+          postingDate: resolvedParams.posting_date as string,
+          baseDate: resolvedParams.base_date as string,
+        })
+      },
+    })
 }
 
 function createSettlementParams(resolvedParams: Record<string, unknown>) {

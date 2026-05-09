@@ -22,7 +22,7 @@
     {
       "id": "automation-plan-valid",
       "status": "pass",
-      "evidence": "Automation plan errors=0, warnings=1."
+      "evidence": "Automation plan errors=0, warnings=0."
     },
     {
       "id": "target-files-declared",
@@ -41,8 +41,8 @@
     },
     {
       "id": "adapter-capability-reviewed",
-      "status": "manual_review",
-      "evidence": "Capability generateInvoice is declared with status=draft and required evidence=generated SAP invoice number is captured, invoice generation success message is visible."
+      "status": "pass",
+      "evidence": "Capability generateInvoice is declared with status=implemented and required evidence=generated SAP invoice number is captured, invoice generation success message is visible."
     },
     {
       "id": "adapter-capability-risk-aligned",

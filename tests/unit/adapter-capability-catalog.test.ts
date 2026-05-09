@@ -66,20 +66,13 @@ describe('adapter capability catalog', () => {
     expect(irreversibleCapabilities.every(capability => capability.requiresHumanApproval)).toBe(true)
   })
 
-  it('tracks irreversible draft capabilities after confirm settlement is implemented', () => {
+  it('has no remaining draft SRM capabilities after invoice split skeletons are implemented', () => {
     const registry = createDefaultAdapterRegistry()
     const draftCapabilities = registry
       .listCapabilities(SAP_SRM_ADAPTER)
       .filter((capability: AdapterCapability) => capability.status === 'draft')
 
-    expect(draftCapabilities.map(capability => capability.name)).toEqual([
-      'generateInvoice',
-    ])
-    expect(draftCapabilities.find(capability => capability.name === 'generateInvoice')).toMatchObject({
-      name: 'generateInvoice',
-      risk: 'irreversible',
-      requiresHumanApproval: true,
-    })
+    expect(draftCapabilities).toHaveLength(0)
   })
 
   it('tracks invoice split capability maturity separately', () => {
@@ -93,7 +86,7 @@ describe('adapter capability catalog', () => {
     })
     expect(registry.getCapability(SAP_SRM_ADAPTER, 'generateInvoice')).toMatchObject({
       action: 'srm_generate_invoice',
-      status: 'draft',
+      status: 'implemented',
       risk: 'irreversible',
       requiresHumanApproval: true,
     })

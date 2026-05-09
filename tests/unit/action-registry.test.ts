@@ -19,6 +19,7 @@ describe('ActionRegistry', () => {
       'screenshot',
       'srm_confirm_settlement',
       'srm_create_settlement',
+      'srm_generate_invoice',
       'srm_operation',
       'srm_query_settlement_status',
       'wait',
@@ -82,6 +83,42 @@ describe('ActionRegistry', () => {
 
     expect(result).toEqual({
       settlementNumber: '9600000001',
+    })
+  })
+
+  it('maps srm_generate_invoice to the SRM adapter generateInvoice method', async () => {
+    const registry = createDefaultActionRegistry()
+    const generateInvoice = async (params: unknown) => params
+
+    const result = await registry.get('srm_generate_invoice')?.execute({
+      page: {} as never,
+      step: { id: 'generate', action: 'srm_generate_invoice' },
+      resolvedParams: {
+        settlement_number: '9600000001',
+        invoice_date: '2026.05.09',
+        posting_date: '2026.05.09',
+        base_date: '2026.05.09',
+      },
+      runContext: null,
+      params: {},
+      outputs: {},
+      getAdapter: () => ({ generateInvoice }),
+      evaluateCondition: () => true,
+      runSubFlow: async () => ({
+        flowName: 'noop',
+        success: true,
+        outputs: {},
+        steps: [],
+        screenshots: [],
+        duration: 0,
+      }),
+    })
+
+    expect(result).toEqual({
+      settlementNumber: '9600000001',
+      invoiceDate: '2026.05.09',
+      postingDate: '2026.05.09',
+      baseDate: '2026.05.09',
     })
   })
 

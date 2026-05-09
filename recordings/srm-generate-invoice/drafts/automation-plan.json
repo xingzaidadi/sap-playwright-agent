@@ -39,7 +39,7 @@
       "action": "srm_generate_invoice",
       "method": "generateInvoice",
       "risk": "irreversible",
-      "status": "draft",
+      "status": "implemented",
       "requires_human_approval": true,
       "evidence": [
         "generated SAP invoice number is captured",

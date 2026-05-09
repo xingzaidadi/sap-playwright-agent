@@ -50,7 +50,7 @@ describe('AdapterRegistry', () => {
     expect(registry.getCapability('sap-srm', 'generateInvoice')).toMatchObject({
       action: 'srm_generate_invoice',
       risk: 'irreversible',
-      status: 'draft',
+      status: 'implemented',
       requiresHumanApproval: true,
     })
   })

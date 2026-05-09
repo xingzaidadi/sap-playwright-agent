@@ -18,11 +18,11 @@ Status: `ready_for_review`
 | Check | Status | Evidence |
 |-------|--------|----------|
 | flow-contract-valid | pass | Flow contract valid=true, errors=0, warnings=0. |
-| automation-plan-valid | pass | Automation plan errors=0, warnings=1. |
+| automation-plan-valid | pass | Automation plan errors=0, warnings=0. |
 | target-files-declared | pass | flows/srm-generate-invoice.yaml, src/engine/actions/integration-actions.ts, src/engine/adapters/sap-srm-adapter.ts, src/sap/pages/srm-generate-invoice-page.ts |
 | action-name-reviewed | manual_review | Review Flow action "srm_generate_invoice" before adding it to src/engine/actions/integration-actions.ts. |
 | adapter-method-reviewed | manual_review | Review Adapter method "generateInvoice" and return evidence contract before production use. |
-| adapter-capability-reviewed | manual_review | Capability generateInvoice is declared with status=draft and required evidence=generated SAP invoice number is captured, invoice generation success message is visible. |
+| adapter-capability-reviewed | pass | Capability generateInvoice is declared with status=implemented and required evidence=generated SAP invoice number is captured, invoice generation success message is visible. |
 | adapter-capability-risk-aligned | pass | Capability risk=irreversible matches flow risk=irreversible; approval requirement=true. |
 | page-object-boundary-reviewed | manual_review | Confirm "SrmGenerateInvoicePage" keeps selectors inside Adapter/Page Object and does not orchestrate the business flow. |
 | risk-and-approval-reviewed | manual_review | Risk=irreversible. Human approval required before execution. Reason=Review the recording and confirm this business operation before execution.. |

@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "3.8"
+version: "3.9"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -34,6 +34,7 @@ changelog:
   "3.6": `srmQuerySettlementStatus` now has a read-only production skeleton with Flow, Action, Adapter method, Page Object, explicit `settlement_number` param, and scanner alignment.
   "3.7": `recordings/srm-create-settlement` now uses explicit business params instead of generic `input`; generated drafts align with `srm_create_settlement` action params.
   "3.8": `confirmSettlement` now has an approval-gated production skeleton with Flow, Action, Adapter method, Page Object, explicit `settlement_id` param, and scanner alignment.
+  "3.9": `generateInvoice` now has an approval-gated production skeleton with Flow, Action, Adapter method, Page Object, explicit invoice date params, and scanner alignment.
 ---
 
 # Web UI Automation Skill
@@ -100,8 +101,11 @@ V3 started:
   It must still not be executed against a real SRM system without explicit human
   approval and environment validation.
   `recordings/srm-generate-invoice` is a dedicated irreversible change-flow draft
-  mapped to `SapSrmAdapter.generateInvoice`; it is ready_for_review only and must
-  not be executed or promoted without explicit human approval and production review.
+  mapped to `SapSrmAdapter.generateInvoice`; it now has an approval-gated production
+  skeleton with `srm_generate_invoice` action and explicit `settlement_number`,
+  `invoice_date`, `posting_date`, and `base_date` params. It must still not be
+  executed against a real SRM system without explicit human approval and environment
+  validation.
   `flows/srm-query-settlement-status.yaml` is the first SRM read-only production
   skeleton. It calls `srm_query_settlement_status`, maps to
   `SapSrmAdapter.srmQuerySettlementStatus`, and must remain read-only.
