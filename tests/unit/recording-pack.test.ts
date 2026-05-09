@@ -7,8 +7,11 @@ import {
   AutomationPlan,
   compileRecordingPack,
   createRecordingPack,
+  inspectPromotionDryRun,
   validateAutomationPlan,
 } from '../../src/recording/recording-pack.js'
+import { buildPromotionGate } from '../../src/recording/promotion-gate.js'
+import type { CodeDraftModel, RecordingMeta } from '../../src/recording/types.js'
 
 const tempRoots: string[] = []
 
@@ -151,6 +154,13 @@ describe('recording-pack', () => {
     const promotionChecklist = readFileSync(join(recordingDir, 'drafts', 'promotion-checklist.md'), 'utf-8')
     expect(promotionChecklist).toContain('Primary gate artifact: `promotion-gate.json`')
     expect(promotionChecklist).toContain('Status: `ready_for_review`')
+
+    const promotionDryRun = inspectPromotionDryRun(recordingDir)
+    expect(promotionDryRun.status).toBe('ready_for_review')
+    expect(promotionDryRun.promotable).toBe(false)
+    expect(promotionDryRun.targetFiles.flow).toBe('flows/query-po-history.yaml')
+    expect(promotionDryRun.manualReviewItems.map(item => item.id)).toContain('action-name-reviewed')
+    expect(promotionDryRun.blockedReasons).toHaveLength(0)
   })
 
   it('compiles SRM irreversible recordings with approval gates', () => {
@@ -278,6 +288,98 @@ describe('recording-pack', () => {
       expect.arrayContaining([
         'adapter.name',
         'safety.requires_human_approval',
+      ])
+    )
+  })
+
+  it('blocks Promotion Gate when plan validation fails', () => {
+    const meta: RecordingMeta = {
+      name: 'unsafe-submit',
+      domain: 'sap',
+      system: 'SAP WebGUI',
+      source: ['sop'],
+      goal: 'Submit a business document.',
+      expectedResult: 'Document is submitted.',
+      riskLevel: 'irreversible',
+      requiresHumanApproval: false,
+      createdAt: '2026-05-09T00:00:00.000Z',
+    }
+    const codeDraft: CodeDraftModel = {
+      actionName: 'unsafe_submit',
+      adapterName: 'sap-ecc',
+      adapterConstantName: 'SAP_ECC_ADAPTER',
+      adapterInterfaceName: 'SapEccAdapter',
+      adapterVariableName: 'sapEcc',
+      methodName: 'unsafeSubmit',
+      pageClassName: 'UnsafeSubmitPage',
+      paramsTypeName: 'UnsafeSubmitParams',
+      resultTypeName: 'UnsafeSubmitResult',
+      risk: 'irreversible',
+      requiresHumanApproval: false,
+      expectedResult: 'Document is submitted.',
+      system: 'SAP WebGUI',
+    }
+    const plan: AutomationPlan = {
+      schema_version: 'automation-plan-v1',
+      recording: {
+        name: 'unsafe-submit',
+        domain: 'sap',
+        system: 'SAP WebGUI',
+        source: ['sop'],
+      },
+      flow: {
+        name: 'unsafe-submit',
+        adapter: 'sap-ecc',
+        risk: 'irreversible',
+        action: 'unsafe_submit',
+        contract: { valid: false, errors: 1, warnings: 0 },
+      },
+      action: {
+        name: 'unsafe_submit',
+        params: ['input'],
+        maps_to_adapter_method: 'unsafeSubmit',
+      },
+      adapter: {
+        name: 'sap-ecc',
+        method: 'unsafeSubmit',
+        responsibilities: ['Submit a business document.'],
+      },
+      page_object: {
+        class_name: 'UnsafeSubmitPage',
+        methods: ['open', 'performUnsafeSubmit', 'readSuccessEvidence'],
+        boundary: 'Page Object stays inside Adapter.',
+      },
+      safety: {
+        risk: 'irreversible',
+        requires_human_approval: false,
+        review_points: ['Confirm approval.'],
+      },
+      evidence: {
+        expected_result: 'Document is submitted.',
+        artifacts: [
+          'drafts/flow.yaml',
+          'drafts/flow-contract.json',
+          'drafts/automation-plan.json',
+          'drafts/automation-plan-validation.json',
+          'drafts/action-registry.md',
+          'drafts/adapter-method.ts',
+          'drafts/page-object-method.ts',
+          'drafts/review-checklist.md',
+          'drafts/promotion-gate.json',
+          'drafts/promotion-checklist.md',
+        ],
+      },
+    }
+
+    const planValidation = validateAutomationPlan(plan)
+    const gate = buildPromotionGate(meta, codeDraft, plan, planValidation)
+
+    expect(gate.status).toBe('blocked')
+    expect(gate.required_checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'flow-contract-valid', status: 'fail' }),
+        expect.objectContaining({ id: 'automation-plan-valid', status: 'fail' }),
+        expect.objectContaining({ id: 'risk-and-approval-reviewed', status: 'fail' }),
       ])
     )
   })

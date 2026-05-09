@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander'
-import { compileRecordingPack, createRecordingPack } from './recording-pack.js'
+import { compileRecordingPack, createRecordingPack, inspectPromotionDryRun } from './recording-pack.js'
 
 const program = new Command()
 
@@ -65,6 +65,52 @@ program
       console.log('\nReview drafts before adding them to Flow Engine, Action Registry, Adapter, or Page Object code.')
     } catch (error) {
       console.error(`Failed to compile Recording Pack: ${error}`)
+      process.exitCode = 1
+    }
+  })
+
+program
+  .command('promote-recording')
+  .description('Inspect whether generated Recording Pack drafts are ready for production promotion')
+  .argument('<recording-dir>', 'Path to a compiled Recording Pack directory')
+  .option('--dry-run', 'Inspect promotion readiness without writing production files')
+  .action((recordingDir, opts) => {
+    try {
+      if (!opts.dryRun) {
+        throw new Error('Only --dry-run is supported. Production promotion must remain explicit and reviewed.')
+      }
+
+      const result = inspectPromotionDryRun(recordingDir)
+
+      console.log(`\nPromotion Gate: ${result.status}`)
+      console.log(`Recording Pack: ${result.recordingDir}`)
+      console.log('\nTarget files:')
+      console.log(`  Flow: ${result.targetFiles.flow}`)
+      console.log(`  Action module: ${result.targetFiles.action_module}`)
+      console.log(`  Adapter module: ${result.targetFiles.adapter_module}`)
+      console.log(`  Page Object module: ${result.targetFiles.page_object_module}`)
+
+      if (result.blockedReasons.length > 0) {
+        console.log('\nBlocked checks:')
+        for (const item of result.blockedReasons) console.log(`  - ${item.id}: ${item.evidence}`)
+      }
+
+      if (result.manualReviewItems.length > 0) {
+        console.log('\nManual review required:')
+        for (const item of result.manualReviewItems) console.log(`  - ${item.id}: ${item.evidence}`)
+      }
+
+      if (result.warningItems.length > 0) {
+        console.log('\nWarnings:')
+        for (const item of result.warningItems) console.log(`  - ${item.id}: ${item.evidence}`)
+      }
+
+      console.log('\nResult: dry-run only. No production files were written.')
+      if (result.status === 'blocked') {
+        process.exitCode = 1
+      }
+    } catch (error) {
+      console.error(`Failed to inspect promotion gate: ${error}`)
       process.exitCode = 1
     }
   })

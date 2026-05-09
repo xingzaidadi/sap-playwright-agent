@@ -30,6 +30,12 @@ Compile the pack into first-pass drafts:
 npm run compile-recording -- recordings/query-po-history
 ```
 
+Inspect whether the drafts can enter production promotion review:
+
+```bash
+npm run promote-recording -- recordings/query-po-history --dry-run
+```
+
 The compiler creates:
 
 - `drafts/flow.yaml`
@@ -84,6 +90,7 @@ SOP / screenshots / manual recording / trace / a11y tree
   -> typed Adapter method draft
   -> typed Page Object method draft
   -> Promotion Gate
+  -> Promotion dry-run
   -> Human review
   -> dry-run
   -> real run

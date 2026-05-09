@@ -3,160 +3,49 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { stringify as stringifyYaml } from 'yaml'
 import { validateFlowContract } from '../engine/flow-loader.js'
 import type { FlowDefinition, FlowRiskLevel, FlowStep } from '../engine/types.js'
+import { buildAutomationPlan, validateAutomationPlan } from './automation-plan.js'
+import {
+  buildPromotionGate,
+  promotionChecklistTemplate,
+} from './promotion-gate.js'
+import {
+  toActionName,
+  toAdapterInterfaceName,
+  toCamelCase,
+  toConstantName,
+  toIdentifier,
+  toPascalCase,
+} from './naming.js'
+import type {
+  AutomationPlan,
+  AutomationPlanValidationResult,
+  CodeDraftModel,
+  CompileRecordingPackOptions,
+  CreateRecordingPackOptions,
+  RecordingMeta,
+  RecordingPackResult,
+  RecordingRiskLevel,
+} from './types.js'
 
-export type RecordingRiskLevel = 'read-only' | 'write' | 'irreversible'
-
-export interface CreateRecordingPackOptions {
-  projectRoot?: string
-  domain?: string
-  system?: string
-  goal?: string
-  expectedResult?: string
-  riskLevel?: RecordingRiskLevel
-  requiresHumanApproval?: boolean
-}
-
-export interface CompileRecordingPackOptions {
-  force?: boolean
-}
-
-export interface RecordingPackResult {
-  directory: string
-  createdFiles: string[]
-  skippedFiles: string[]
-}
-
-interface RecordingMeta {
-  name: string
-  domain: string
-  system: string
-  source: string[]
-  goal: string
-  expectedResult: string
-  riskLevel: RecordingRiskLevel
-  requiresHumanApproval: boolean
-  createdAt: string
-}
-
-export interface AutomationPlan {
-  schema_version: 'automation-plan-v1'
-  recording: {
-    name: string
-    domain: string
-    system: string
-    source: string[]
-  }
-  flow: {
-    name: string
-    adapter: string
-    risk: FlowRiskLevel
-    action: string
-    contract: {
-      valid: boolean
-      errors: number
-      warnings: number
-    }
-  }
-  action: {
-    name: string
-    params: string[]
-    maps_to_adapter_method: string
-  }
-  adapter: {
-    name: string
-    method: string
-    responsibilities: string[]
-  }
-  page_object: {
-    class_name: string
-    methods: string[]
-    boundary: string
-  }
-  safety: {
-    risk: FlowRiskLevel
-    requires_human_approval: boolean
-    approval_reason?: string
-    review_points: string[]
-  }
-  evidence: {
-    expected_result: string
-    artifacts: string[]
-  }
-}
-
-export interface AutomationPlanIssue {
-  level: 'error' | 'warning'
-  path: string
-  message: string
-}
-
-export interface AutomationPlanValidationResult {
-  valid: boolean
-  errors: AutomationPlanIssue[]
-  warnings: AutomationPlanIssue[]
-}
-
-export type PromotionGateStatus = 'blocked' | 'ready_for_review' | 'ready_for_promotion'
-
-export type PromotionGateCheckStatus = 'pass' | 'warning' | 'manual_review' | 'fail'
-
-export interface PromotionGateCheck {
-  id: string
-  status: PromotionGateCheckStatus
-  evidence: string
-}
-
-export interface PromotionGate {
-  schema_version: 'promotion-gate-v1'
-  status: PromotionGateStatus
-  recording: string
-  flow: string
-  action: string
-  adapter: string
-  adapter_method: string
-  manual_reviewer_required: boolean
-  target_files: {
-    flow: string
-    action_module: string
-    adapter_module: string
-    page_object_module: string
-  }
-  required_checks: PromotionGateCheck[]
-  note: string
-}
-
-interface CodeDraftModel {
-  actionName: string
-  adapterName: string
-  adapterConstantName: string
-  adapterInterfaceName: string
-  adapterVariableName: string
-  methodName: string
-  pageClassName: string
-  paramsTypeName: string
-  resultTypeName: string
-  risk: FlowRiskLevel
-  requiresHumanApproval: boolean
-  approvalReason?: string
-  expectedResult: string
-  system: string
-}
+export { validateAutomationPlan } from './automation-plan.js'
+export { inspectPromotionDryRun } from './promotion-gate.js'
+export type {
+  AutomationPlan,
+  AutomationPlanIssue,
+  AutomationPlanValidationResult,
+  CompileRecordingPackOptions,
+  CreateRecordingPackOptions,
+  PromotionDryRunResult,
+  PromotionGate,
+  PromotionGateCheck,
+  PromotionGateCheckStatus,
+  PromotionGateStatus,
+  RecordingPackResult,
+  RecordingRiskLevel,
+} from './types.js'
 
 const DEFAULT_DOMAIN = 'sap'
 const DEFAULT_SYSTEM = 'SAP WebGUI'
-const AUTOMATION_PLAN_SCHEMA_VERSION = 'automation-plan-v1'
-const REQUIRED_AUTOMATION_PLAN_ARTIFACTS = [
-  'drafts/flow.yaml',
-  'drafts/flow-contract.json',
-  'drafts/automation-plan.json',
-  'drafts/automation-plan-validation.json',
-  'drafts/action-registry.md',
-  'drafts/adapter-method.ts',
-  'drafts/page-object-method.ts',
-  'drafts/review-checklist.md',
-  'drafts/promotion-gate.json',
-  'drafts/promotion-checklist.md',
-]
 
 export function assertSafeRecordingName(name: string): void {
   if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name)) {
@@ -259,204 +148,6 @@ export function compileRecordingPack(
   }
 
   return writeFiles(recordingDir, files, options.force ?? false)
-}
-
-export function validateAutomationPlan(plan: AutomationPlan): AutomationPlanValidationResult {
-  const issues: AutomationPlanIssue[] = []
-  const addIssue = (level: AutomationPlanIssue['level'], path: string, message: string) => {
-    issues.push({ level, path, message })
-  }
-
-  if (plan.schema_version !== AUTOMATION_PLAN_SCHEMA_VERSION) {
-    addIssue('error', 'schema_version', `Automation plan schema_version must be "${AUTOMATION_PLAN_SCHEMA_VERSION}".`)
-  }
-
-  if (!plan.recording?.name) {
-    addIssue('error', 'recording.name', 'Automation plan must include recording.name.')
-  }
-  if (!plan.flow?.name) {
-    addIssue('error', 'flow.name', 'Automation plan must include flow.name.')
-  }
-  if (!plan.flow?.adapter) {
-    addIssue('error', 'flow.adapter', 'Automation plan must include flow.adapter.')
-  }
-  if (!plan.action?.name) {
-    addIssue('error', 'action.name', 'Automation plan must include action.name.')
-  }
-  if (!plan.adapter?.name) {
-    addIssue('error', 'adapter.name', 'Automation plan must include adapter.name.')
-  }
-
-  if (plan.flow?.adapter && plan.adapter?.name && plan.flow.adapter !== plan.adapter.name) {
-    addIssue('error', 'adapter.name', 'Adapter name must match flow.adapter.')
-  }
-  if (plan.flow?.action && plan.action?.name && plan.flow.action !== plan.action.name) {
-    addIssue('error', 'action.name', 'Action name must match flow.action.')
-  }
-  if (
-    plan.action?.maps_to_adapter_method &&
-    plan.adapter?.method &&
-    plan.action.maps_to_adapter_method !== plan.adapter.method
-  ) {
-    addIssue('error', 'action.maps_to_adapter_method', 'Action adapter method must match adapter.method.')
-  }
-  if (plan.flow?.risk && plan.safety?.risk && plan.flow.risk !== plan.safety.risk) {
-    addIssue('error', 'safety.risk', 'Safety risk must match flow.risk.')
-  }
-
-  if (plan.flow?.contract && !plan.flow.contract.valid) {
-    addIssue('error', 'flow.contract.valid', 'Flow contract must be valid before review can pass.')
-  }
-  if ((plan.flow?.contract?.errors ?? 0) > 0) {
-    addIssue('error', 'flow.contract.errors', 'Flow contract errors must be resolved.')
-  }
-  if ((plan.flow?.contract?.warnings ?? 0) > 0) {
-    addIssue('warning', 'flow.contract.warnings', 'Flow contract warnings must be reviewed.')
-  }
-
-  if (plan.flow?.risk === 'irreversible') {
-    if (!plan.safety?.requires_human_approval) {
-      addIssue('error', 'safety.requires_human_approval', 'Irreversible automation plans require human approval.')
-    }
-    if (!plan.safety?.approval_reason) {
-      addIssue('warning', 'safety.approval_reason', 'Irreversible automation plans should explain the approval reason.')
-    }
-  }
-
-  if (!Array.isArray(plan.action?.params) || plan.action.params.length === 0) {
-    addIssue('warning', 'action.params', 'Automation plan should declare action params.')
-  }
-  if (!Array.isArray(plan.adapter?.responsibilities) || plan.adapter.responsibilities.length === 0) {
-    addIssue('warning', 'adapter.responsibilities', 'Automation plan should declare adapter responsibilities.')
-  }
-  if (!Array.isArray(plan.page_object?.methods) || plan.page_object.methods.length === 0) {
-    addIssue('warning', 'page_object.methods', 'Automation plan should declare page object methods.')
-  }
-  if (!plan.page_object?.boundary) {
-    addIssue('warning', 'page_object.boundary', 'Automation plan should declare the Page Object boundary.')
-  }
-
-  const artifacts = new Set(plan.evidence?.artifacts ?? [])
-  for (const artifact of REQUIRED_AUTOMATION_PLAN_ARTIFACTS) {
-    if (!artifacts.has(artifact)) {
-      addIssue('error', 'evidence.artifacts', `Automation plan must include artifact: ${artifact}.`)
-    }
-  }
-
-  const errors = issues.filter(issue => issue.level === 'error')
-  const warnings = issues.filter(issue => issue.level === 'warning')
-  return { valid: errors.length === 0, errors, warnings }
-}
-
-function buildPromotionGate(
-  meta: RecordingMeta,
-  code: CodeDraftModel,
-  plan: AutomationPlan,
-  planValidation: AutomationPlanValidationResult
-): PromotionGate {
-  const targetFiles = {
-    flow: `flows/${plan.flow.name}.yaml`,
-    action_module: actionModuleTarget(plan.adapter.name),
-    adapter_module: `src/engine/adapters/${plan.adapter.name}-adapter.ts`,
-    page_object_module: pageObjectTarget(plan.adapter.name, code.pageClassName),
-  }
-
-  const checks: PromotionGateCheck[] = [
-    check(
-      'flow-contract-valid',
-      plan.flow.contract.valid && plan.flow.contract.errors === 0 ? 'pass' : 'fail',
-      `Flow contract valid=${String(plan.flow.contract.valid)}, errors=${plan.flow.contract.errors}, warnings=${plan.flow.contract.warnings}.`
-    ),
-    check(
-      'automation-plan-valid',
-      planValidation.valid ? 'pass' : 'fail',
-      `Automation plan errors=${planValidation.errors.length}, warnings=${planValidation.warnings.length}.`
-    ),
-    check('target-files-declared', 'pass', Object.values(targetFiles).join(', ')),
-    check(
-      'action-name-reviewed',
-      'manual_review',
-      `Review Flow action "${plan.action.name}" before adding it to ${targetFiles.action_module}.`
-    ),
-    check(
-      'adapter-method-reviewed',
-      'manual_review',
-      `Review Adapter method "${plan.adapter.method}" and return evidence contract before production use.`
-    ),
-    check(
-      'page-object-boundary-reviewed',
-      'manual_review',
-      `Confirm "${plan.page_object.class_name}" keeps selectors inside Adapter/Page Object and does not orchestrate the business flow.`
-    ),
-    check(
-      'risk-and-approval-reviewed',
-      riskApprovalCheckStatus(plan),
-      riskApprovalEvidence(plan)
-    ),
-    check(
-      'evidence-reviewed',
-      'manual_review',
-      `Confirm expected result is observable: ${plan.evidence.expected_result}`
-    ),
-    check(
-      'secrets-and-sensitive-data-reviewed',
-      'manual_review',
-      'Confirm recordings, screenshots, selectors, and generated drafts contain no passwords, cookies, tokens, internal URLs, supplier-sensitive data, or customer private data.'
-    ),
-    check(
-      'production-write-blocked',
-      'pass',
-      'Compiler generated draft artifacts only; no production Flow/Action/Adapter/Page Object files were written.'
-    ),
-  ]
-
-  return {
-    schema_version: 'promotion-gate-v1',
-    status: promotionStatus(checks),
-    recording: meta.name,
-    flow: plan.flow.name,
-    action: plan.action.name,
-    adapter: plan.adapter.name,
-    adapter_method: plan.adapter.method,
-    manual_reviewer_required: true,
-    target_files: targetFiles,
-    required_checks: checks,
-    note: 'Generated drafts can enter human review when status is ready_for_review. Production promotion remains manual until every manual_review item is explicitly resolved.',
-  }
-}
-
-function check(id: string, status: PromotionGateCheckStatus, evidence: string): PromotionGateCheck {
-  return { id, status, evidence }
-}
-
-function promotionStatus(checks: PromotionGateCheck[]): PromotionGateStatus {
-  if (checks.some(item => item.status === 'fail')) {
-    return 'blocked'
-  }
-  if (checks.some(item => item.status === 'warning' || item.status === 'manual_review')) {
-    return 'ready_for_review'
-  }
-  return 'ready_for_promotion'
-}
-
-function riskApprovalCheckStatus(plan: AutomationPlan): PromotionGateCheckStatus {
-  if (plan.flow.risk === 'irreversible' && !plan.safety.requires_human_approval) {
-    return 'fail'
-  }
-  if (plan.flow.risk === 'irreversible' || plan.safety.requires_human_approval) {
-    return 'manual_review'
-  }
-  return 'pass'
-}
-
-function riskApprovalEvidence(plan: AutomationPlan): string {
-  if (plan.flow.risk === 'irreversible' && !plan.safety.requires_human_approval) {
-    return 'Irreversible flow is missing human approval.'
-  }
-  if (plan.flow.risk === 'irreversible' || plan.safety.requires_human_approval) {
-    return `Risk=${plan.flow.risk}. Human approval required before execution. Reason=${plan.safety.approval_reason ?? 'not provided'}.`
-  }
-  return `Risk=${plan.flow.risk}. No irreversible business operation declared.`
 }
 
 function writeFiles(rootDir: string, files: Record<string, string>, overwrite: boolean): RecordingPackResult {
@@ -661,76 +352,6 @@ function buildFlowDraft(meta: RecordingMeta, actionName: string): FlowDefinition
 
 function flowDraftTemplate(flow: FlowDefinition): string {
   return stringifyYaml(flow)
-}
-
-function buildAutomationPlan(
-  meta: RecordingMeta,
-  codeDraft: CodeDraftModel,
-  flowDraft: FlowDefinition,
-  contract: ReturnType<typeof validateFlowContract>
-): AutomationPlan {
-  const adapterName = flowDraft.metadata?.adapter ?? inferAdapterName(meta)
-  const risk = flowDraft.metadata?.risk ?? toFlowRiskLevel(meta.riskLevel)
-  const approvalReason = flowDraft.steps.find(step => step.requires_approval)?.approval_reason
-
-  return {
-    schema_version: AUTOMATION_PLAN_SCHEMA_VERSION,
-    recording: {
-      name: meta.name,
-      domain: meta.domain,
-      system: meta.system,
-      source: meta.source,
-    },
-    flow: {
-      name: flowDraft.name,
-      adapter: adapterName,
-      risk,
-      action: codeDraft.actionName,
-      contract: {
-        valid: contract.valid,
-        errors: contract.errors.length,
-        warnings: contract.warnings.length,
-      },
-    },
-    action: {
-      name: codeDraft.actionName,
-      params: flowDraft.params.map(param => param.name),
-      maps_to_adapter_method: codeDraft.methodName,
-    },
-    adapter: {
-      name: adapterName,
-      method: codeDraft.methodName,
-      responsibilities: [
-        'Convert business params into system-specific page operations.',
-        'Handle navigation, waits, dialogs, and system messages.',
-        'Return structured business result and evidence.',
-      ],
-    },
-    page_object: {
-      class_name: codeDraft.pageClassName,
-      methods: [
-        'open',
-        `perform${codeDraft.pageClassName.replace(/Page$/, '')}`,
-        'readSuccessEvidence',
-      ],
-      boundary: 'Page Object stays inside Adapter and must not orchestrate cross-system business flow.',
-    },
-    safety: {
-      risk,
-      requires_human_approval: meta.requiresHumanApproval || risk === 'irreversible',
-      approval_reason: approvalReason,
-      review_points: [
-        'Confirm business inputs are current and complete.',
-        'Confirm selectors remain behind Adapter/Page Object, not Flow YAML.',
-        'Confirm irreversible operations have approval gates.',
-        'Confirm success evidence is observable and reportable.',
-      ],
-    },
-    evidence: {
-      expected_result: meta.expectedResult,
-      artifacts: [...REQUIRED_AUTOMATION_PLAN_ARTIFACTS],
-    },
-  }
 }
 
 function buildCodeDraftModel(
@@ -947,95 +568,6 @@ Primary review artifact: \`automation-plan.json\`
 - [ ] Human approval requirement reviewed: ${String(meta.requiresHumanApproval)}.
 - [ ] No passwords, cookies, tokens, supplier-sensitive data, or customer private data are stored in this Recording Pack.
 `
-}
-
-function promotionChecklistTemplate(gate: PromotionGate): string {
-  const checkRows = gate.required_checks
-    .map(item => `| ${item.id} | ${item.status} | ${item.evidence} |`)
-    .join('\n')
-
-  return `# Promotion Checklist: ${gate.recording}
-
-Primary gate artifact: \`promotion-gate.json\`
-
-Status: \`${gate.status}\`
-
-## Target Files
-
-| Target | Path |
-|--------|------|
-| Flow | \`${gate.target_files.flow}\` |
-| Action module | \`${gate.target_files.action_module}\` |
-| Adapter module | \`${gate.target_files.adapter_module}\` |
-| Page Object module | \`${gate.target_files.page_object_module}\` |
-
-## Required Checks
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-${checkRows}
-
-## Promotion Rule
-
-- Do not copy drafts into production files while status is \`blocked\`.
-- When status is \`ready_for_review\`, a human reviewer must resolve every \`manual_review\` and \`warning\` item.
-- Production promotion is a separate commit after Flow, Action, Adapter, Page Object, risk, evidence, and sensitive-data checks are resolved.
-`
-}
-
-function actionModuleTarget(adapterName: string): string {
-  if (adapterName === 'sap-ecc' || adapterName === 'sap-srm') {
-    return 'src/engine/actions/sap-actions.ts'
-  }
-  return `src/engine/actions/${toKebabCase(adapterName)}-actions.ts`
-}
-
-function pageObjectTarget(adapterName: string, pageClassName: string): string {
-  if (adapterName === 'sap-ecc') {
-    return `src/sap/pages/${toKebabCase(pageClassName)}.ts`
-  }
-  if (adapterName === 'sap-srm') {
-    return `src/sap/srm/pages/${toKebabCase(pageClassName)}.ts`
-  }
-  return `src/adapters/${toKebabCase(adapterName)}/pages/${toKebabCase(pageClassName)}.ts`
-}
-
-function toActionName(flowName: string): string {
-  return flowName.replace(/[-\s]+/g, '_').replace(/[^a-zA-Z0-9_]/g, '').replace(/^(\d)/, '_$1')
-}
-
-function toPascalCase(flowName: string): string {
-  return flowName
-    .split(/[-_\s]+/)
-    .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('')
-}
-
-function toCamelCase(value: string): string {
-  const pascal = toPascalCase(value)
-  return pascal.charAt(0).toLowerCase() + pascal.slice(1)
-}
-
-function toConstantName(value: string): string {
-  return `${value.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').toUpperCase()}_ADAPTER`
-}
-
-function toAdapterInterfaceName(adapterName: string): string {
-  return `${toPascalCase(adapterName)}Adapter`
-}
-
-function toIdentifier(value: string): string {
-  const identifier = toCamelCase(value.replace(/[^a-zA-Z0-9]+/g, '_'))
-  return identifier || 'adapter'
-}
-
-function toKebabCase(value: string): string {
-  return value
-    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-    .replace(/[^a-zA-Z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .toLowerCase()
 }
 
 function escapeTsString(value: string): string {

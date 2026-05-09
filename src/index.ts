@@ -20,6 +20,7 @@ export {
 export {
   compileRecordingPack,
   createRecordingPack,
+  inspectPromotionDryRun,
   validateAutomationPlan,
 } from './recording/recording-pack.js'
 export { loadConfig } from './utils/config.js'
@@ -43,6 +44,7 @@ export type {
   AutomationPlanValidationResult,
   CompileRecordingPackOptions,
   CreateRecordingPackOptions,
+  PromotionDryRunResult,
   PromotionGate,
   PromotionGateCheck,
   PromotionGateCheckStatus,
