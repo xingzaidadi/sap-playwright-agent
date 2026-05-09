@@ -102,6 +102,12 @@ describe('recording-pack', () => {
       params: ['input'],
       maps_to_adapter_method: 'queryPoHistory',
     })
+    expect(plan.adapter.capability).toMatchObject({
+      declared: false,
+      name: 'queryPoHistory',
+      action: 'query_po_history',
+      method: 'queryPoHistory',
+    })
     expect(plan.page_object.class_name).toBe('QueryPoHistoryPage')
     expect(plan.evidence.artifacts).toContain('drafts/flow-contract.json')
     expect(plan.evidence.artifacts).toContain('drafts/automation-plan-validation.json')
@@ -111,6 +117,7 @@ describe('recording-pack', () => {
     const planValidation = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan-validation.json'), 'utf-8'))
     expect(planValidation.valid).toBe(true)
     expect(planValidation.errors).toHaveLength(0)
+    expect(planValidation.warnings.map((warning: { path: string }) => warning.path)).toContain('adapter.capability')
 
     const actionDraft = readFileSync(join(recordingDir, 'drafts', 'action-registry.md'), 'utf-8')
     expect(actionDraft).toContain("name: 'query_po_history'")
@@ -145,6 +152,8 @@ describe('recording-pack', () => {
         'automation-plan-valid',
         'action-name-reviewed',
         'adapter-method-reviewed',
+        'adapter-capability-reviewed',
+        'adapter-capability-risk-aligned',
         'page-object-boundary-reviewed',
         'secrets-and-sensitive-data-reviewed',
         'production-write-blocked',
@@ -192,12 +201,21 @@ describe('recording-pack', () => {
     const plan = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan.json'), 'utf-8'))
     expect(plan.flow.adapter).toBe('sap-srm')
     expect(plan.action.maps_to_adapter_method).toBe('createSettlement')
+    expect(plan.adapter.capability).toMatchObject({
+      declared: true,
+      name: 'createSettlement',
+      method: 'createSettlement',
+      risk: 'irreversible',
+      status: 'implemented',
+      requires_human_approval: true,
+    })
     expect(plan.safety.requires_human_approval).toBe(true)
     expect(plan.safety.approval_reason).toContain('Review the recording')
 
     const planValidation = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan-validation.json'), 'utf-8'))
     expect(planValidation.valid).toBe(true)
     expect(planValidation.errors).toHaveLength(0)
+    expect(planValidation.warnings.map((warning: { path: string }) => warning.path)).toContain('adapter.capability.action')
 
     const promotionGate = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'promotion-gate.json'), 'utf-8'))
     expect(promotionGate.status).toBe('ready_for_review')
@@ -210,6 +228,11 @@ describe('recording-pack', () => {
       promotionGate.required_checks.find((item: { id: string }) => item.id === 'risk-and-approval-reviewed')
     ).toMatchObject({
       status: 'manual_review',
+    })
+    expect(
+      promotionGate.required_checks.find((item: { id: string }) => item.id === 'adapter-capability-risk-aligned')
+    ).toMatchObject({
+      status: 'pass',
     })
   })
 

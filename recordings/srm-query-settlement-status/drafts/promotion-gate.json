@@ -22,7 +22,7 @@
     {
       "id": "automation-plan-valid",
       "status": "pass",
-      "evidence": "Automation plan errors=0, warnings=0."
+      "evidence": "Automation plan errors=0, warnings=1."
     },
     {
       "id": "target-files-declared",
@@ -38,6 +38,16 @@
       "id": "adapter-method-reviewed",
       "status": "manual_review",
       "evidence": "Review Adapter method \"srmQuerySettlementStatus\" and return evidence contract before production use."
+    },
+    {
+      "id": "adapter-capability-reviewed",
+      "status": "manual_review",
+      "evidence": "Capability srmQuerySettlementStatus is declared with status=draft and required evidence=settlement number, supplier, status, last update or explicit not-found state."
+    },
+    {
+      "id": "adapter-capability-risk-aligned",
+      "status": "pass",
+      "evidence": "Capability risk=read_only matches flow risk=read_only; approval requirement=false."
     },
     {
       "id": "page-object-boundary-reviewed",

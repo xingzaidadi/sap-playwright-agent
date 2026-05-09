@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "2.8"
+version: "2.9"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -24,6 +24,7 @@ changelog:
   "2.6": Recording Compiler internals are split into flow draft, automation plan, code draft, promotion gate, templates, naming, and shared type modules; V2 architecture docs are available.
   "2.7": V3 has started with an SRM read-only Recording Pack sample; Promotion Gate now targets SRM action drafts at integration-actions and current SRM Page Object paths.
   "2.8": Adapter Registry now exposes a capability catalog with risk, status, approval, action/method mapping, and evidence requirements for SAP ECC and SRM.
+  "2.9": Automation Plan and Promotion Gate now consume Adapter capability catalog evidence and surface undeclared, draft, risk, and approval mismatches during review.
 ---
 
 # Web UI Automation Skill
@@ -68,6 +69,9 @@ V3 started:
   promoted without cleanup, redaction, contract validation, approval review, and dry-run.
   Adapter capability catalog V1 is available through AdapterRegistry and declares
   SRM read-only draft and irreversible capabilities with approval requirements.
+  Automation Plan and Promotion Gate now include capability catalog checks, so
+  drafts can show undeclared capabilities, draft/planned status, risk mismatches,
+  and approval mismatches before production promotion.
 ```
 
 Current framing:

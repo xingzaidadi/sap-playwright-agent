@@ -40,6 +40,15 @@ describe('adapter capability catalog', () => {
       status: 'draft',
       requiresHumanApproval: plan.safety.requires_human_approval,
     })
+    expect(plan.adapter.capability).toMatchObject({
+      declared: true,
+      name: 'srmQuerySettlementStatus',
+      action: plan.action.name,
+      method: plan.adapter.method,
+      risk: plan.flow.risk,
+      status: 'draft',
+      requires_human_approval: false,
+    })
   })
 
   it('requires approval for every irreversible SRM capability', () => {

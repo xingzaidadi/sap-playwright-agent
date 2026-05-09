@@ -18,10 +18,12 @@ Status: `ready_for_review`
 | Check | Status | Evidence |
 |-------|--------|----------|
 | flow-contract-valid | pass | Flow contract valid=true, errors=0, warnings=0. |
-| automation-plan-valid | pass | Automation plan errors=0, warnings=0. |
+| automation-plan-valid | pass | Automation plan errors=0, warnings=1. |
 | target-files-declared | pass | flows/srm-query-settlement-status.yaml, src/engine/actions/integration-actions.ts, src/engine/adapters/sap-srm-adapter.ts, src/sap/pages/srm-query-settlement-status-page.ts |
 | action-name-reviewed | manual_review | Review Flow action "srm_query_settlement_status" before adding it to src/engine/actions/integration-actions.ts. |
 | adapter-method-reviewed | manual_review | Review Adapter method "srmQuerySettlementStatus" and return evidence contract before production use. |
+| adapter-capability-reviewed | manual_review | Capability srmQuerySettlementStatus is declared with status=draft and required evidence=settlement number, supplier, status, last update or explicit not-found state. |
+| adapter-capability-risk-aligned | pass | Capability risk=read_only matches flow risk=read_only; approval requirement=false. |
 | page-object-boundary-reviewed | manual_review | Confirm "SrmQuerySettlementStatusPage" keeps selectors inside Adapter/Page Object and does not orchestrate the business flow. |
 | risk-and-approval-reviewed | pass | Risk=read_only. No irreversible business operation declared. |
 | evidence-reviewed | manual_review | Confirm expected result is observable: The SRM settlement status is visible on screen and captured as evidence with settlement number, supplier, status, and last update information when available. |

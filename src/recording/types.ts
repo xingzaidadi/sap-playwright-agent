@@ -1,4 +1,5 @@
 import type { FlowRiskLevel } from '../engine/types.js'
+import type { AdapterCapabilityStatus } from '../engine/adapters/types.js'
 
 export type RecordingRiskLevel = 'read-only' | 'write' | 'irreversible'
 
@@ -61,6 +62,16 @@ export interface AutomationPlan {
   adapter: {
     name: string
     method: string
+    capability?: {
+      declared: boolean
+      name: string
+      action?: string
+      method?: string
+      risk?: FlowRiskLevel
+      status?: AdapterCapabilityStatus
+      requires_human_approval?: boolean
+      evidence: string[]
+    }
     responsibilities: string[]
   }
   page_object: {

@@ -49,6 +49,16 @@ export function buildPromotionGate(
       `Review Adapter method "${plan.adapter.method}" and return evidence contract before production use.`
     ),
     check(
+      'adapter-capability-reviewed',
+      capabilityCheckStatus(plan),
+      capabilityCheckEvidence(plan)
+    ),
+    check(
+      'adapter-capability-risk-aligned',
+      capabilityRiskCheckStatus(plan),
+      capabilityRiskCheckEvidence(plan)
+    ),
+    check(
       'page-object-boundary-reviewed',
       'manual_review',
       `Confirm "${plan.page_object.class_name}" keeps selectors inside Adapter/Page Object and does not orchestrate the business flow.`
@@ -179,6 +189,59 @@ function riskApprovalEvidence(plan: AutomationPlan): string {
     return `Risk=${plan.flow.risk}. Human approval required before execution. Reason=${plan.safety.approval_reason ?? 'not provided'}.`
   }
   return `Risk=${plan.flow.risk}. No irreversible business operation declared.`
+}
+
+function capabilityCheckStatus(plan: AutomationPlan): PromotionGateCheckStatus {
+  const capability = plan.adapter.capability
+  if (!capability || !capability.declared) {
+    return 'warning'
+  }
+  if (capability.status === 'blocked') {
+    return 'fail'
+  }
+  if (capability.status === 'draft' || capability.status === 'planned') {
+    return 'manual_review'
+  }
+  return 'pass'
+}
+
+function capabilityCheckEvidence(plan: AutomationPlan): string {
+  const capability = plan.adapter.capability
+  if (!capability) {
+    return 'No adapter capability catalog evidence was attached to the Automation Plan.'
+  }
+  if (!capability.declared) {
+    return `No declared capability found for adapter=${plan.adapter.name}, action=${plan.action.name}, method=${plan.adapter.method}.`
+  }
+  return `Capability ${capability.name} is declared with status=${capability.status ?? 'unknown'} and required evidence=${capability.evidence.join(', ') || 'not declared'}.`
+}
+
+function capabilityRiskCheckStatus(plan: AutomationPlan): PromotionGateCheckStatus {
+  const capability = plan.adapter.capability
+  if (!capability || !capability.declared) {
+    return 'warning'
+  }
+  if (capability.risk && capability.risk !== plan.flow.risk) {
+    return 'fail'
+  }
+  if (capability.requires_human_approval && !plan.safety.requires_human_approval) {
+    return 'fail'
+  }
+  return 'pass'
+}
+
+function capabilityRiskCheckEvidence(plan: AutomationPlan): string {
+  const capability = plan.adapter.capability
+  if (!capability || !capability.declared) {
+    return 'Capability risk cannot be verified because no declared capability was matched.'
+  }
+  if (capability.risk && capability.risk !== plan.flow.risk) {
+    return `Capability risk=${capability.risk} does not match flow risk=${plan.flow.risk}.`
+  }
+  if (capability.requires_human_approval && !plan.safety.requires_human_approval) {
+    return 'Capability requires human approval, but Automation Plan safety does not.'
+  }
+  return `Capability risk=${capability.risk ?? 'unknown'} matches flow risk=${plan.flow.risk}; approval requirement=${String(capability.requires_human_approval ?? false)}.`
 }
 
 function actionModuleTarget(adapterName: string): string {

@@ -1,4 +1,5 @@
 import type { FlowContractResult } from '../engine/flow-loader.js'
+import { createDefaultAdapterRegistry, type AdapterCapability } from '../engine/adapters/index.js'
 import type { FlowDefinition } from '../engine/types.js'
 import type {
   AutomationPlan,
@@ -60,6 +61,7 @@ export function buildAutomationPlan(
     adapter: {
       name: adapterName,
       method: codeDraft.methodName,
+      capability: resolveAdapterCapability(adapterName, codeDraft.actionName, codeDraft.methodName),
       responsibilities: [
         'Convert business params into system-specific page operations.',
         'Handle navigation, waits, dialogs, and system messages.',
@@ -135,6 +137,7 @@ export function validateAutomationPlan(plan: AutomationPlan): AutomationPlanVali
   if (plan.flow?.risk && plan.safety?.risk && plan.flow.risk !== plan.safety.risk) {
     addIssue('error', 'safety.risk', 'Safety risk must match flow.risk.')
   }
+  validateCapabilityAlignment(plan, addIssue)
 
   if (plan.flow?.contract && !plan.flow.contract.valid) {
     addIssue('error', 'flow.contract.valid', 'Flow contract must be valid before review can pass.')
@@ -178,4 +181,81 @@ export function validateAutomationPlan(plan: AutomationPlan): AutomationPlanVali
   const errors = issues.filter(issue => issue.level === 'error')
   const warnings = issues.filter(issue => issue.level === 'warning')
   return { valid: errors.length === 0, errors, warnings }
+}
+
+function resolveAdapterCapability(
+  adapterName: string,
+  actionName: string,
+  methodName: string
+): NonNullable<AutomationPlan['adapter']['capability']> {
+  const undeclared = (): NonNullable<AutomationPlan['adapter']['capability']> => ({
+    declared: false,
+    name: methodName,
+    action: actionName,
+    method: methodName,
+    evidence: [],
+  })
+
+  const registry = createDefaultAdapterRegistry()
+  if (!registry.has(adapterName)) {
+    return undeclared()
+  }
+
+  const capability = registry
+    .listCapabilities(adapterName)
+    .find(item => matchesCapability(item, actionName, methodName))
+  if (!capability) {
+    return undeclared()
+  }
+
+  return {
+    declared: true,
+    name: capability.name,
+    action: capability.action,
+    method: capability.method,
+    risk: capability.risk,
+    status: capability.status,
+    requires_human_approval: capability.requiresHumanApproval,
+    evidence: [...capability.evidence],
+  }
+}
+
+function matchesCapability(capability: AdapterCapability, actionName: string, methodName: string): boolean {
+  return capability.name === methodName || capability.method === methodName || capability.action === actionName
+}
+
+function validateCapabilityAlignment(
+  plan: AutomationPlan,
+  addIssue: (level: AutomationPlanIssue['level'], path: string, message: string) => void
+): void {
+  const capability = plan.adapter?.capability
+  if (!capability) {
+    return
+  }
+
+  if (!capability.declared) {
+    addIssue('warning', 'adapter.capability', 'Adapter capability is not declared in the capability catalog.')
+    return
+  }
+  if (capability.action && capability.action !== plan.action?.name) {
+    addIssue('warning', 'adapter.capability.action', 'Adapter capability action differs from plan.action.name; confirm the action mapping during review.')
+  }
+  if (capability.method && capability.method !== plan.adapter?.method) {
+    addIssue('error', 'adapter.capability.method', 'Adapter capability method must match adapter.method.')
+  }
+  if (capability.risk && capability.risk !== plan.flow?.risk) {
+    addIssue('error', 'adapter.capability.risk', 'Adapter capability risk must match flow.risk.')
+  }
+  if (capability.requires_human_approval && !plan.safety?.requires_human_approval) {
+    addIssue('error', 'adapter.capability.requires_human_approval', 'Capability requires human approval, but plan safety does not.')
+  }
+  if (capability.status === 'blocked') {
+    addIssue('error', 'adapter.capability.status', 'Blocked adapter capabilities cannot be promoted.')
+  }
+  if (capability.status === 'draft' || capability.status === 'planned') {
+    addIssue('warning', 'adapter.capability.status', `Adapter capability status is ${capability.status}; production promotion requires manual review.`)
+  }
+  if (!Array.isArray(capability.evidence) || capability.evidence.length === 0) {
+    addIssue('warning', 'adapter.capability.evidence', 'Adapter capability should declare required evidence.')
+  }
 }

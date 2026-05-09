@@ -30,6 +30,21 @@
   "adapter": {
     "name": "sap-srm",
     "method": "srmQuerySettlementStatus",
+    "capability": {
+      "declared": true,
+      "name": "srmQuerySettlementStatus",
+      "action": "srm_query_settlement_status",
+      "method": "srmQuerySettlementStatus",
+      "risk": "read_only",
+      "status": "draft",
+      "requires_human_approval": false,
+      "evidence": [
+        "settlement number",
+        "supplier",
+        "status",
+        "last update or explicit not-found state"
+      ]
+    },
     "responsibilities": [
       "Convert business params into system-specific page operations.",
       "Handle navigation, waits, dialogs, and system messages.",
