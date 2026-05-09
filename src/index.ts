@@ -17,6 +17,11 @@ export {
   validateFlowContract,
   validateParams,
 } from './engine/flow-loader.js'
+export {
+  compileRecordingPack,
+  createRecordingPack,
+  validateAutomationPlan,
+} from './recording/recording-pack.js'
 export { loadConfig } from './utils/config.js'
 export { logger } from './utils/logger.js'
 
@@ -32,4 +37,13 @@ export type {
 export type { FlowContractIssue, FlowContractResult } from './engine/flow-loader.js'
 export type { ActionContext, FlowAction } from './engine/actions/index.js'
 export type { AdapterContext, AdapterFactory } from './engine/adapters/index.js'
+export type {
+  AutomationPlan,
+  AutomationPlanIssue,
+  AutomationPlanValidationResult,
+  CompileRecordingPackOptions,
+  CreateRecordingPackOptions,
+  RecordingPackResult,
+  RecordingRiskLevel,
+} from './recording/recording-pack.js'
 export type { AppConfig, SAPConfig } from './utils/config.js'

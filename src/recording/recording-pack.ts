@@ -38,7 +38,7 @@ interface RecordingMeta {
   createdAt: string
 }
 
-interface AutomationPlan {
+export interface AutomationPlan {
   schema_version: 'automation-plan-v1'
   recording: {
     name: string
@@ -84,8 +84,31 @@ interface AutomationPlan {
   }
 }
 
+export interface AutomationPlanIssue {
+  level: 'error' | 'warning'
+  path: string
+  message: string
+}
+
+export interface AutomationPlanValidationResult {
+  valid: boolean
+  errors: AutomationPlanIssue[]
+  warnings: AutomationPlanIssue[]
+}
+
 const DEFAULT_DOMAIN = 'sap'
 const DEFAULT_SYSTEM = 'SAP WebGUI'
+const AUTOMATION_PLAN_SCHEMA_VERSION = 'automation-plan-v1'
+const REQUIRED_AUTOMATION_PLAN_ARTIFACTS = [
+  'drafts/flow.yaml',
+  'drafts/flow-contract.json',
+  'drafts/automation-plan.json',
+  'drafts/automation-plan-validation.json',
+  'drafts/action-registry.md',
+  'drafts/adapter-method.ts',
+  'drafts/page-object-method.ts',
+  'drafts/review-checklist.md',
+]
 
 export function assertSafeRecordingName(name: string): void {
   if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name)) {
@@ -164,6 +187,7 @@ export function compileRecordingPack(
   const flowDraft = buildFlowDraft(meta, actionName)
   const contract = validateFlowContract(flowDraft)
   const automationPlan = buildAutomationPlan(meta, actionName, pageClassName, flowDraft, contract)
+  const automationPlanValidation = validateAutomationPlan(automationPlan)
 
   mkdirSync(join(recordingDir, 'drafts'), { recursive: true })
 
@@ -171,13 +195,107 @@ export function compileRecordingPack(
     'drafts/flow.yaml': flowDraftTemplate(flowDraft),
     'drafts/flow-contract.json': `${JSON.stringify(contract, null, 2)}\n`,
     'drafts/automation-plan.json': `${JSON.stringify(automationPlan, null, 2)}\n`,
+    'drafts/automation-plan-validation.json': `${JSON.stringify(automationPlanValidation, null, 2)}\n`,
     'drafts/action-registry.md': actionRegistryDraftTemplate(meta, actionName, adapterName),
     'drafts/adapter-method.ts': adapterMethodDraftTemplate(meta, actionName, pageClassName),
     'drafts/page-object-method.ts': pageObjectDraftTemplate(meta, actionName, pageClassName),
-    'drafts/review-checklist.md': reviewChecklistTemplate(meta, actionName, automationPlan, contract),
+    'drafts/review-checklist.md': reviewChecklistTemplate(
+      meta,
+      actionName,
+      automationPlan,
+      contract,
+      automationPlanValidation
+    ),
   }
 
   return writeFiles(recordingDir, files, options.force ?? false)
+}
+
+export function validateAutomationPlan(plan: AutomationPlan): AutomationPlanValidationResult {
+  const issues: AutomationPlanIssue[] = []
+  const addIssue = (level: AutomationPlanIssue['level'], path: string, message: string) => {
+    issues.push({ level, path, message })
+  }
+
+  if (plan.schema_version !== AUTOMATION_PLAN_SCHEMA_VERSION) {
+    addIssue('error', 'schema_version', `Automation plan schema_version must be "${AUTOMATION_PLAN_SCHEMA_VERSION}".`)
+  }
+
+  if (!plan.recording?.name) {
+    addIssue('error', 'recording.name', 'Automation plan must include recording.name.')
+  }
+  if (!plan.flow?.name) {
+    addIssue('error', 'flow.name', 'Automation plan must include flow.name.')
+  }
+  if (!plan.flow?.adapter) {
+    addIssue('error', 'flow.adapter', 'Automation plan must include flow.adapter.')
+  }
+  if (!plan.action?.name) {
+    addIssue('error', 'action.name', 'Automation plan must include action.name.')
+  }
+  if (!plan.adapter?.name) {
+    addIssue('error', 'adapter.name', 'Automation plan must include adapter.name.')
+  }
+
+  if (plan.flow?.adapter && plan.adapter?.name && plan.flow.adapter !== plan.adapter.name) {
+    addIssue('error', 'adapter.name', 'Adapter name must match flow.adapter.')
+  }
+  if (plan.flow?.action && plan.action?.name && plan.flow.action !== plan.action.name) {
+    addIssue('error', 'action.name', 'Action name must match flow.action.')
+  }
+  if (
+    plan.action?.maps_to_adapter_method &&
+    plan.adapter?.method &&
+    plan.action.maps_to_adapter_method !== plan.adapter.method
+  ) {
+    addIssue('error', 'action.maps_to_adapter_method', 'Action adapter method must match adapter.method.')
+  }
+  if (plan.flow?.risk && plan.safety?.risk && plan.flow.risk !== plan.safety.risk) {
+    addIssue('error', 'safety.risk', 'Safety risk must match flow.risk.')
+  }
+
+  if (plan.flow?.contract && !plan.flow.contract.valid) {
+    addIssue('error', 'flow.contract.valid', 'Flow contract must be valid before review can pass.')
+  }
+  if ((plan.flow?.contract?.errors ?? 0) > 0) {
+    addIssue('error', 'flow.contract.errors', 'Flow contract errors must be resolved.')
+  }
+  if ((plan.flow?.contract?.warnings ?? 0) > 0) {
+    addIssue('warning', 'flow.contract.warnings', 'Flow contract warnings must be reviewed.')
+  }
+
+  if (plan.flow?.risk === 'irreversible') {
+    if (!plan.safety?.requires_human_approval) {
+      addIssue('error', 'safety.requires_human_approval', 'Irreversible automation plans require human approval.')
+    }
+    if (!plan.safety?.approval_reason) {
+      addIssue('warning', 'safety.approval_reason', 'Irreversible automation plans should explain the approval reason.')
+    }
+  }
+
+  if (!Array.isArray(plan.action?.params) || plan.action.params.length === 0) {
+    addIssue('warning', 'action.params', 'Automation plan should declare action params.')
+  }
+  if (!Array.isArray(plan.adapter?.responsibilities) || plan.adapter.responsibilities.length === 0) {
+    addIssue('warning', 'adapter.responsibilities', 'Automation plan should declare adapter responsibilities.')
+  }
+  if (!Array.isArray(plan.page_object?.methods) || plan.page_object.methods.length === 0) {
+    addIssue('warning', 'page_object.methods', 'Automation plan should declare page object methods.')
+  }
+  if (!plan.page_object?.boundary) {
+    addIssue('warning', 'page_object.boundary', 'Automation plan should declare the Page Object boundary.')
+  }
+
+  const artifacts = new Set(plan.evidence?.artifacts ?? [])
+  for (const artifact of REQUIRED_AUTOMATION_PLAN_ARTIFACTS) {
+    if (!artifacts.has(artifact)) {
+      addIssue('error', 'evidence.artifacts', `Automation plan must include artifact: ${artifact}.`)
+    }
+  }
+
+  const errors = issues.filter(issue => issue.level === 'error')
+  const warnings = issues.filter(issue => issue.level === 'warning')
+  return { valid: errors.length === 0, errors, warnings }
 }
 
 function writeFiles(rootDir: string, files: Record<string, string>, overwrite: boolean): RecordingPackResult {
@@ -336,7 +454,7 @@ function draftsReadmeTemplate(flowName: string): string {
 
 Run \`compile-recording recordings/${flowName}\` to create first-pass drafts.
 
-These drafts are not production automation. Review the generated Flow, Action Registry entry, Adapter method, Page Object method, and checklist before execution.
+These drafts are not production automation. Start with \`automation-plan.json\` and \`automation-plan-validation.json\`, then review the generated Flow, Action Registry entry, Adapter method, Page Object method, and checklist before execution.
 `
 }
 
@@ -396,7 +514,7 @@ function buildAutomationPlan(
   const approvalReason = flowDraft.steps.find(step => step.requires_approval)?.approval_reason
 
   return {
-    schema_version: 'automation-plan-v1',
+    schema_version: AUTOMATION_PLAN_SCHEMA_VERSION,
     recording: {
       name: meta.name,
       domain: meta.domain,
@@ -450,14 +568,7 @@ function buildAutomationPlan(
     },
     evidence: {
       expected_result: meta.expectedResult,
-      artifacts: [
-        'drafts/flow.yaml',
-        'drafts/flow-contract.json',
-        'drafts/action-registry.md',
-        'drafts/adapter-method.ts',
-        'drafts/page-object-method.ts',
-        'drafts/review-checklist.md',
-      ],
+      artifacts: [...REQUIRED_AUTOMATION_PLAN_ARTIFACTS],
     },
   }
 }
@@ -568,7 +679,8 @@ function reviewChecklistTemplate(
   meta: RecordingMeta,
   actionName: string,
   plan: AutomationPlan,
-  contract: ReturnType<typeof validateFlowContract>
+  contract: ReturnType<typeof validateFlowContract>,
+  planValidation: AutomationPlanValidationResult
 ): string {
   return `# Review Checklist: ${meta.name}
 
@@ -578,6 +690,9 @@ Primary review artifact: \`automation-plan.json\`
 
 - [ ] Flow step uses business action name: \`${actionName}\`.
 - [ ] Automation plan reviewed: \`${plan.schema_version}\`.
+- [ ] Automation plan validation reviewed: ${planValidation.valid ? 'valid' : 'has errors'}.
+- [ ] Automation plan warnings reviewed: ${planValidation.warnings.length}.
+- [ ] Automation plan errors resolved: ${planValidation.errors.length}.
 - [ ] Flow params contain business data, not selectors.
 - [ ] Flow has clear success evidence.
 - [ ] Flow metadata declares schema version, adapter, and risk.

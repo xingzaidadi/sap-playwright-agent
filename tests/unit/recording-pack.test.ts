@@ -3,7 +3,12 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import { afterEach, describe, expect, it } from 'vitest'
-import { compileRecordingPack, createRecordingPack } from '../../src/recording/recording-pack.js'
+import {
+  AutomationPlan,
+  compileRecordingPack,
+  createRecordingPack,
+  validateAutomationPlan,
+} from '../../src/recording/recording-pack.js'
 
 const tempRoots: string[] = []
 
@@ -55,6 +60,7 @@ describe('recording-pack', () => {
         expect.stringContaining('drafts/flow.yaml'),
         expect.stringContaining('drafts/flow-contract.json'),
         expect.stringContaining('drafts/automation-plan.json'),
+        expect.stringContaining('drafts/automation-plan-validation.json'),
         expect.stringContaining('drafts/action-registry.md'),
         expect.stringContaining('drafts/adapter-method.ts'),
         expect.stringContaining('drafts/page-object-method.ts'),
@@ -93,6 +99,11 @@ describe('recording-pack', () => {
     })
     expect(plan.page_object.class_name).toBe('QueryPoHistoryPage')
     expect(plan.evidence.artifacts).toContain('drafts/flow-contract.json')
+    expect(plan.evidence.artifacts).toContain('drafts/automation-plan-validation.json')
+
+    const planValidation = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan-validation.json'), 'utf-8'))
+    expect(planValidation.valid).toBe(true)
+    expect(planValidation.errors).toHaveLength(0)
   })
 
   it('compiles SRM irreversible recordings with approval gates', () => {
@@ -125,6 +136,87 @@ describe('recording-pack', () => {
     expect(plan.flow.adapter).toBe('sap-srm')
     expect(plan.safety.requires_human_approval).toBe(true)
     expect(plan.safety.approval_reason).toContain('Review the recording')
+
+    const planValidation = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan-validation.json'), 'utf-8'))
+    expect(planValidation.valid).toBe(true)
+    expect(planValidation.errors).toHaveLength(0)
+  })
+
+  it('validates Automation Plan consistency', () => {
+    const plan: AutomationPlan = {
+      schema_version: 'automation-plan-v1',
+      recording: {
+        name: 'query-po-history',
+        domain: 'sap',
+        system: 'SAP WebGUI',
+        source: ['sop'],
+      },
+      flow: {
+        name: 'query-po-history',
+        adapter: 'sap-ecc',
+        risk: 'read_only',
+        action: 'query_po_history',
+        contract: { valid: true, errors: 0, warnings: 0 },
+      },
+      action: {
+        name: 'query_po_history',
+        params: ['input'],
+        maps_to_adapter_method: 'query_po_history',
+      },
+      adapter: {
+        name: 'sap-ecc',
+        method: 'query_po_history',
+        responsibilities: ['Convert business params into page operations.'],
+      },
+      page_object: {
+        class_name: 'QueryPoHistoryPage',
+        methods: ['open', 'performQueryPoHistory', 'readSuccessEvidence'],
+        boundary: 'Page Object stays inside Adapter.',
+      },
+      safety: {
+        risk: 'read_only',
+        requires_human_approval: false,
+        review_points: ['Confirm evidence.'],
+      },
+      evidence: {
+        expected_result: 'PO history table is visible.',
+        artifacts: [
+          'drafts/flow.yaml',
+          'drafts/flow-contract.json',
+          'drafts/automation-plan.json',
+          'drafts/automation-plan-validation.json',
+          'drafts/action-registry.md',
+          'drafts/adapter-method.ts',
+          'drafts/page-object-method.ts',
+          'drafts/review-checklist.md',
+        ],
+      },
+    }
+
+    expect(validateAutomationPlan(plan)).toMatchObject({ valid: true, errors: [] })
+
+    const invalid = {
+      ...plan,
+      flow: {
+        ...plan.flow,
+        adapter: 'sap-srm',
+        risk: 'irreversible' as const,
+      },
+      safety: {
+        ...plan.safety,
+        risk: 'irreversible' as const,
+        requires_human_approval: false,
+      },
+    }
+
+    const result = validateAutomationPlan(invalid)
+    expect(result.valid).toBe(false)
+    expect(result.errors.map(error => error.path)).toEqual(
+      expect.arrayContaining([
+        'adapter.name',
+        'safety.requires_human_approval',
+      ])
+    )
   })
 
   it('rejects unsafe recording names', () => {

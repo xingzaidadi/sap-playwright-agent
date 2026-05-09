@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "2.1"
+version: "2.2"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -17,6 +17,7 @@ changelog:
   "1.9": Flow Contract V1 metadata and validation clarify adapter ownership, risk level, approval gates, and page-detail boundaries.
   "2.0": Recording Compiler now emits Flow Contract metadata and validation artifacts for generated Flow drafts.
   "2.1": Recording Compiler now emits an Automation Plan that links Flow, Action, Adapter, Page Object, safety, and evidence drafts.
+  "2.2": Automation Plan validation now checks plan consistency across Flow, Action, Adapter, Page Object, safety, and evidence artifacts.
 ---
 
 # Web UI Automation Skill
@@ -49,7 +50,8 @@ V2 in progress:
   Run Context, Step Evidence, enhanced reports, SAP ECC primitives,
   read-only/change-flow split, approval gate, Action Registry V1,
   Adapter Registry V1, SAP/SRM adapter interfaces, Flow Contract V1,
-  Recording Compiler contract validation, and Automation Plan V1 are in place.
+  Recording Compiler contract validation, Automation Plan V1,
+  and Automation Plan validation are in place.
   The next architecture step is expanding adapters beyond SAP/SRM samples.
 
 V3 not started:
@@ -157,6 +159,7 @@ Generated drafts are review inputs:
 Flow draft with Flow Contract metadata
 Flow Contract validation result
 Automation Plan
+Automation Plan validation result
 Action Registry draft
 Adapter method draft
 Page Object draft
@@ -165,7 +168,7 @@ review checklist
 
 If key evidence is missing, return `PARTIAL` or `BLOCKED` and explain what evidence is missing.
 
-Compiled recordings should create `drafts/flow.yaml`, `drafts/flow-contract.json`, and `drafts/automation-plan.json`. The draft Flow must include `metadata.schema_version`, `metadata.adapter`, and `metadata.risk` before it is considered ready for review. Treat `automation-plan.json` as the primary review index linking Flow, Action, Adapter, Page Object, safety, and evidence.
+Compiled recordings should create `drafts/flow.yaml`, `drafts/flow-contract.json`, `drafts/automation-plan.json`, and `drafts/automation-plan-validation.json`. The draft Flow must include `metadata.schema_version`, `metadata.adapter`, and `metadata.risk` before it is considered ready for review. Treat `automation-plan.json` as the primary review index linking Flow, Action, Adapter, Page Object, safety, and evidence; treat `automation-plan-validation.json` as the consistency gate for that index.
 
 ## Architecture Boundaries
 
