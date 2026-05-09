@@ -96,6 +96,23 @@ export interface AutomationPlanValidationResult {
   warnings: AutomationPlanIssue[]
 }
 
+interface CodeDraftModel {
+  actionName: string
+  adapterName: string
+  adapterConstantName: string
+  adapterInterfaceName: string
+  adapterVariableName: string
+  methodName: string
+  pageClassName: string
+  paramsTypeName: string
+  resultTypeName: string
+  risk: FlowRiskLevel
+  requiresHumanApproval: boolean
+  approvalReason?: string
+  expectedResult: string
+  system: string
+}
+
 const DEFAULT_DOMAIN = 'sap'
 const DEFAULT_SYSTEM = 'SAP WebGUI'
 const AUTOMATION_PLAN_SCHEMA_VERSION = 'automation-plan-v1'
@@ -182,11 +199,10 @@ export function compileRecordingPack(
   assertSafeRecordingName(flowName)
 
   const actionName = toActionName(flowName)
-  const pageClassName = toPascalCase(flowName)
-  const adapterName = `${meta.domain || DEFAULT_DOMAIN}Adapter`
   const flowDraft = buildFlowDraft(meta, actionName)
   const contract = validateFlowContract(flowDraft)
-  const automationPlan = buildAutomationPlan(meta, actionName, pageClassName, flowDraft, contract)
+  const codeDraft = buildCodeDraftModel(meta, actionName, flowDraft)
+  const automationPlan = buildAutomationPlan(meta, codeDraft, flowDraft, contract)
   const automationPlanValidation = validateAutomationPlan(automationPlan)
 
   mkdirSync(join(recordingDir, 'drafts'), { recursive: true })
@@ -196,9 +212,9 @@ export function compileRecordingPack(
     'drafts/flow-contract.json': `${JSON.stringify(contract, null, 2)}\n`,
     'drafts/automation-plan.json': `${JSON.stringify(automationPlan, null, 2)}\n`,
     'drafts/automation-plan-validation.json': `${JSON.stringify(automationPlanValidation, null, 2)}\n`,
-    'drafts/action-registry.md': actionRegistryDraftTemplate(meta, actionName, adapterName),
-    'drafts/adapter-method.ts': adapterMethodDraftTemplate(meta, actionName, pageClassName),
-    'drafts/page-object-method.ts': pageObjectDraftTemplate(meta, actionName, pageClassName),
+    'drafts/action-registry.md': actionRegistryDraftTemplate(meta, codeDraft),
+    'drafts/adapter-method.ts': adapterMethodDraftTemplate(codeDraft),
+    'drafts/page-object-method.ts': pageObjectDraftTemplate(codeDraft),
     'drafts/review-checklist.md': reviewChecklistTemplate(
       meta,
       actionName,
@@ -504,8 +520,7 @@ function flowDraftTemplate(flow: FlowDefinition): string {
 
 function buildAutomationPlan(
   meta: RecordingMeta,
-  actionName: string,
-  pageClassName: string,
+  codeDraft: CodeDraftModel,
   flowDraft: FlowDefinition,
   contract: ReturnType<typeof validateFlowContract>
 ): AutomationPlan {
@@ -525,7 +540,7 @@ function buildAutomationPlan(
       name: flowDraft.name,
       adapter: adapterName,
       risk,
-      action: actionName,
+      action: codeDraft.actionName,
       contract: {
         valid: contract.valid,
         errors: contract.errors.length,
@@ -533,13 +548,13 @@ function buildAutomationPlan(
       },
     },
     action: {
-      name: actionName,
+      name: codeDraft.actionName,
       params: flowDraft.params.map(param => param.name),
-      maps_to_adapter_method: actionName,
+      maps_to_adapter_method: codeDraft.methodName,
     },
     adapter: {
       name: adapterName,
-      method: actionName,
+      method: codeDraft.methodName,
       responsibilities: [
         'Convert business params into system-specific page operations.',
         'Handle navigation, waits, dialogs, and system messages.',
@@ -547,10 +562,10 @@ function buildAutomationPlan(
       ],
     },
     page_object: {
-      class_name: `${pageClassName}Page`,
+      class_name: codeDraft.pageClassName,
       methods: [
         'open',
-        `perform${pageClassName}`,
+        `perform${codeDraft.pageClassName.replace(/Page$/, '')}`,
         'readSuccessEvidence',
       ],
       boundary: 'Page Object stays inside Adapter and must not orchestrate cross-system business flow.',
@@ -570,6 +585,32 @@ function buildAutomationPlan(
       expected_result: meta.expectedResult,
       artifacts: [...REQUIRED_AUTOMATION_PLAN_ARTIFACTS],
     },
+  }
+}
+
+function buildCodeDraftModel(
+  meta: RecordingMeta,
+  actionName: string,
+  flowDraft: FlowDefinition
+): CodeDraftModel {
+  const adapterName = flowDraft.metadata?.adapter ?? inferAdapterName(meta)
+  const risk = flowDraft.metadata?.risk ?? toFlowRiskLevel(meta.riskLevel)
+  const baseName = toPascalCase(actionName)
+  return {
+    actionName,
+    adapterName,
+    adapterConstantName: toConstantName(adapterName),
+    adapterInterfaceName: toAdapterInterfaceName(adapterName),
+    adapterVariableName: toIdentifier(adapterName),
+    methodName: toCamelCase(actionName),
+    pageClassName: `${baseName}Page`,
+    paramsTypeName: `${baseName}Params`,
+    resultTypeName: `${baseName}Result`,
+    risk,
+    requiresHumanApproval: meta.requiresHumanApproval || risk === 'irreversible',
+    approvalReason: flowDraft.steps.find(step => step.requires_approval)?.approval_reason,
+    expectedResult: meta.expectedResult,
+    system: meta.system,
   }
 }
 
@@ -598,8 +639,8 @@ function toFlowRiskLevel(riskLevel: RecordingRiskLevel): FlowRiskLevel {
   }
 }
 
-function actionRegistryDraftTemplate(meta: RecordingMeta, actionName: string, adapterName: string): string {
-  return `# Action Registry Draft: ${actionName}
+function actionRegistryDraftTemplate(meta: RecordingMeta, code: CodeDraftModel): string {
+  return `# Action Registry Draft: ${code.actionName}
 
 Start from \`automation-plan.json\`. This file is a human-readable action mapping draft.
 
@@ -610,12 +651,25 @@ Start from \`automation-plan.json\`. This file is a human-readable action mappin
 - System: ${meta.system}
 - Risk level: ${meta.riskLevel}
 - Requires human approval: ${String(meta.requiresHumanApproval)}
+- Adapter: ${code.adapterName}
+- Adapter method: ${code.methodName}
 
 ## Proposed Mapping
 
 \`\`\`ts
-registerAction('${actionName}', async (ctx, params) => {
-  return ${adapterName}.${actionName}(params)
+import {
+  ${code.adapterConstantName},
+  type ${code.adapterInterfaceName},
+} from '../adapters/index.js'
+
+registry.register({
+  name: '${code.actionName}',
+  async execute({ getAdapter, resolvedParams }) {
+    const ${code.adapterVariableName} = getAdapter<${code.adapterInterfaceName}>(${code.adapterConstantName})
+    return await ${code.adapterVariableName}.${code.methodName}({
+      input: resolvedParams.input as string,
+    })
+  },
 })
 \`\`\`
 
@@ -627,47 +681,72 @@ registerAction('${actionName}', async (ctx, params) => {
 `
 }
 
-function adapterMethodDraftTemplate(meta: RecordingMeta, actionName: string, pageClassName: string): string {
+function adapterMethodDraftTemplate(code: CodeDraftModel): string {
   return `// Draft only. Review automation-plan.json before production use.
-export async function ${actionName}(params: Record<string, unknown>) {
-  // Adapter responsibility:
-  // - convert business params into page operations
-  // - handle system-specific navigation, waits, dialogs, and evidence
-  // - return structured business result
-  const page = new ${pageClassName}Page(this.page)
+import { ${code.pageClassName} } from './page-object-method.js'
 
-  await page.open()
-  await page.perform${pageClassName}(params)
-  const evidence = await page.readSuccessEvidence()
+export interface ${code.paramsTypeName} {
+  input: string
+}
+
+export interface ${code.resultTypeName} {
+  success: boolean
+  system: string
+  risk: '${code.risk}'
+  evidence: {
+    expected: string
+    observed: unknown
+    artifacts: string[]
+  }
+}
+
+export async function ${code.methodName}(
+  page: import('playwright').Page,
+  params: ${code.paramsTypeName}
+): Promise<${code.resultTypeName}> {
+  // Adapter: ${code.adapterName}
+  // Risk: ${code.risk}
+${code.requiresHumanApproval ? `  // Approval required: ${code.approvalReason ?? 'Review before execution.'}\n` : ''}  const screen = new ${code.pageClassName}(page)
+
+  await screen.open()
+  await screen.perform${code.pageClassName.replace(/Page$/, '')}(params)
+  const observed = await screen.readSuccessEvidence()
 
   return {
     success: true,
-    system: '${meta.system}',
-    evidence,
+    system: '${code.system}',
+    risk: '${code.risk}',
+    evidence: {
+      expected: '${escapeTsString(code.expectedResult)}',
+      observed,
+      artifacts: [],
+    },
   }
 }
 `
 }
 
-function pageObjectDraftTemplate(meta: RecordingMeta, actionName: string, pageClassName: string): string {
+function pageObjectDraftTemplate(code: CodeDraftModel): string {
   return `// Draft only. Page Object stays inside the Adapter. Review automation-plan.json first.
-export class ${pageClassName}Page {
+import type { ${code.paramsTypeName} } from './adapter-method.js'
+
+export class ${code.pageClassName} {
   constructor(private readonly page: import('playwright').Page) {}
 
   async open() {
-    // Navigate to the page or transaction for ${meta.system}.
+    // Navigate to the page or transaction for ${code.system}.
   }
 
-  async perform${pageClassName}(params: Record<string, unknown>) {
+  async perform${code.pageClassName.replace(/Page$/, '')}(params: ${code.paramsTypeName}) {
     // Convert Recording Pack selector candidates into stable locators.
     // Keep business orchestration out of this Page Object.
-    void params
+    await Promise.resolve(params)
   }
 
   async readSuccessEvidence() {
     // Read system message, document number, status, or other observable evidence.
     return {
-      action: '${actionName}',
+      action: '${code.actionName}',
       message: '',
     }
   }
@@ -735,4 +814,26 @@ function toPascalCase(flowName: string): string {
     .filter(Boolean)
     .map(part => part.charAt(0).toUpperCase() + part.slice(1))
     .join('')
+}
+
+function toCamelCase(value: string): string {
+  const pascal = toPascalCase(value)
+  return pascal.charAt(0).toLowerCase() + pascal.slice(1)
+}
+
+function toConstantName(value: string): string {
+  return `${value.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').toUpperCase()}_ADAPTER`
+}
+
+function toAdapterInterfaceName(adapterName: string): string {
+  return `${toPascalCase(adapterName)}Adapter`
+}
+
+function toIdentifier(value: string): string {
+  const identifier = toCamelCase(value.replace(/[^a-zA-Z0-9]+/g, '_'))
+  return identifier || 'adapter'
+}
+
+function escapeTsString(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 }

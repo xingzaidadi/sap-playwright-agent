@@ -9,8 +9,8 @@ It is not traditional RPA-style record-and-playback. A Recording Pack captures S
 - Automation Plan
 - Automation Plan validation result
 - Action Registry entries
-- Adapter methods
-- Page Object methods
+- typed Adapter method drafts
+- typed Page Object method drafts
 - Review checklists
 
 ## Template
@@ -77,9 +77,9 @@ SOP / screenshots / manual recording / trace / a11y tree
   -> Recording Pack
   -> Flow draft + Flow Contract validation
   -> Automation Plan + Automation Plan validation
-  -> Action draft
-  -> Adapter draft
-  -> Page Object draft
+  -> Action mapping draft
+  -> typed Adapter method draft
+  -> typed Page Object method draft
   -> Human review
   -> dry-run
   -> real run

@@ -95,7 +95,7 @@ describe('recording-pack', () => {
     expect(plan.action).toMatchObject({
       name: 'query_po_history',
       params: ['input'],
-      maps_to_adapter_method: 'query_po_history',
+      maps_to_adapter_method: 'queryPoHistory',
     })
     expect(plan.page_object.class_name).toBe('QueryPoHistoryPage')
     expect(plan.evidence.artifacts).toContain('drafts/flow-contract.json')
@@ -104,6 +104,21 @@ describe('recording-pack', () => {
     const planValidation = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan-validation.json'), 'utf-8'))
     expect(planValidation.valid).toBe(true)
     expect(planValidation.errors).toHaveLength(0)
+
+    const actionDraft = readFileSync(join(recordingDir, 'drafts', 'action-registry.md'), 'utf-8')
+    expect(actionDraft).toContain("name: 'query_po_history'")
+    expect(actionDraft).toContain('SAP_ECC_ADAPTER')
+    expect(actionDraft).toContain('queryPoHistory')
+
+    const adapterDraft = readFileSync(join(recordingDir, 'drafts', 'adapter-method.ts'), 'utf-8')
+    expect(adapterDraft).toContain("import { QueryPoHistoryPage } from './page-object-method.js'")
+    expect(adapterDraft).toContain('export interface QueryPoHistoryParams')
+    expect(adapterDraft).toContain('export interface QueryPoHistoryResult')
+    expect(adapterDraft).toContain('export async function queryPoHistory')
+
+    const pageObjectDraft = readFileSync(join(recordingDir, 'drafts', 'page-object-method.ts'), 'utf-8')
+    expect(pageObjectDraft).toContain('export class QueryPoHistoryPage')
+    expect(pageObjectDraft).toContain('async performQueryPoHistory')
   })
 
   it('compiles SRM irreversible recordings with approval gates', () => {
@@ -134,6 +149,7 @@ describe('recording-pack', () => {
 
     const plan = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan.json'), 'utf-8'))
     expect(plan.flow.adapter).toBe('sap-srm')
+    expect(plan.action.maps_to_adapter_method).toBe('createSettlement')
     expect(plan.safety.requires_human_approval).toBe(true)
     expect(plan.safety.approval_reason).toContain('Review the recording')
 
@@ -161,11 +177,11 @@ describe('recording-pack', () => {
       action: {
         name: 'query_po_history',
         params: ['input'],
-        maps_to_adapter_method: 'query_po_history',
+        maps_to_adapter_method: 'queryPoHistory',
       },
       adapter: {
         name: 'sap-ecc',
-        method: 'query_po_history',
+        method: 'queryPoHistory',
         responsibilities: ['Convert business params into page operations.'],
       },
       page_object: {
