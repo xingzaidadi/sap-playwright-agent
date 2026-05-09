@@ -14,6 +14,8 @@ It is not traditional RPA-style record-and-playback. A Recording Pack captures S
 - Review checklists
 - Promotion Gate review artifacts
 
+For the full V2 framework boundary, see `docs/v2-architecture.md`.
+
 ## Template
 
 Use the V1 CLI when starting a new automation flow:

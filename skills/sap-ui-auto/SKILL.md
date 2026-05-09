@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "2.5"
+version: "2.6"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -21,6 +21,7 @@ changelog:
   "2.3": Plan-to-Code Draft V1 generates typed action, adapter, and page-object code drafts from the validated Automation Plan.
   "2.4": Draft Promotion Gate V1 defines review checks before generated drafts can be promoted into production Flow, Action, Adapter, and Page Object files.
   "2.5": Promotion dry-run CLI inspects generated drafts before production promotion without writing production files.
+  "2.6": Recording Compiler internals are split into flow draft, automation plan, code draft, promotion gate, templates, naming, and shared type modules; V2 architecture docs are available.
 ---
 
 # Web UI Automation Skill
@@ -54,8 +55,9 @@ V2 in progress:
   read-only/change-flow split, approval gate, Action Registry V1,
   Adapter Registry V1, SAP/SRM adapter interfaces, Flow Contract V1,
   Recording Compiler contract validation, Automation Plan V1,
-  Automation Plan validation, Plan-to-Code Draft V1, Draft Promotion Gate V1, and Promotion dry-run are in place.
-  The next architecture step is expanding adapters beyond SAP/SRM samples.
+  Automation Plan validation, Plan-to-Code Draft V1, Draft Promotion Gate V1,
+  Promotion dry-run, compiler module split, and V2 architecture docs are in place.
+  The next architecture step is starting V3 with a cleaned second adapter candidate.
 
 V3 not started:
   SRM is the second Adapter candidate, but current SRM drafts are experimental.
@@ -71,6 +73,12 @@ Business Flow = reusable sample or workflow asset, not the generic core itself
 ```
 
 If article wording, memory, and repository code conflict, trust the current repository code.
+
+Developer architecture reference:
+
+```text
+E:/sap-playwright-agent/docs/v2-architecture.md
+```
 
 ## Behavior Priority
 
