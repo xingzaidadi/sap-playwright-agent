@@ -1,0 +1,59 @@
+{
+  "candidates": [
+    {
+      "step": 1,
+      "role": "link",
+      "label": "",
+      "text": "Settlement",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Candidate only. Final implementation should use actual SRM portal evidence from recording."
+    },
+    {
+      "step": 2,
+      "role": "textbox",
+      "label": "Vendor",
+      "text": "",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "high",
+      "note": "Do not hard-code real vendor values."
+    },
+    {
+      "step": 2,
+      "role": "textbox",
+      "label": "Company Code",
+      "text": "",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "high",
+      "note": "Business label preferred over generated DOM id."
+    },
+    {
+      "step": 5,
+      "role": "button",
+      "label": "Create Settlement",
+      "text": "Create Settlement",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Opening the dialog is not the final irreversible action."
+    },
+    {
+      "step": 8,
+      "role": "button",
+      "label": "Create",
+      "text": "Create",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Final create button must be behind a human approval gate."
+    }
+  ]
+}

@@ -11,6 +11,7 @@ export interface CreateRecordingPackOptions {
   expectedResult?: string
   riskLevel?: RecordingRiskLevel
   requiresHumanApproval?: boolean
+  adapterMethod?: string
 }
 
 export interface CompileRecordingPackOptions {
@@ -32,6 +33,7 @@ export interface RecordingMeta {
   expectedResult: string
   riskLevel: RecordingRiskLevel
   requiresHumanApproval: boolean
+  adapterMethod?: string
   createdAt: string
 }
 

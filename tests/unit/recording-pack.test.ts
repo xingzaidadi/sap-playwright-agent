@@ -236,6 +236,34 @@ describe('recording-pack', () => {
     })
   })
 
+  it('uses adapter method override from recording metadata', () => {
+    const projectRoot = makeTempRoot()
+    createRecordingPack('srm-create-settlement', {
+      projectRoot,
+      domain: 'sap-srm',
+      system: 'SAP SRM Portal',
+      riskLevel: 'irreversible',
+      requiresHumanApproval: true,
+      adapterMethod: 'createSettlement',
+    })
+
+    const recordingDir = join(projectRoot, 'recordings', 'srm-create-settlement')
+    compileRecordingPack(recordingDir)
+
+    const plan = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan.json'), 'utf-8'))
+    expect(plan.action).toMatchObject({
+      name: 'srm_create_settlement',
+      maps_to_adapter_method: 'createSettlement',
+    })
+    expect(plan.adapter.capability).toMatchObject({
+      declared: true,
+      name: 'createSettlement',
+      method: 'createSettlement',
+      risk: 'irreversible',
+      status: 'implemented',
+    })
+  })
+
   it('validates Automation Plan consistency', () => {
     const plan: AutomationPlan = {
       schema_version: 'automation-plan-v1',

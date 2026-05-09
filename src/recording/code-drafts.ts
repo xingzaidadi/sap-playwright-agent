@@ -23,7 +23,7 @@ export function buildCodeDraftModel(
     adapterConstantName: toConstantName(adapterName),
     adapterInterfaceName: toAdapterInterfaceName(adapterName),
     adapterVariableName: toIdentifier(adapterName),
-    methodName: toCamelCase(actionName),
+    methodName: meta.adapterMethod ?? toCamelCase(actionName),
     pageClassName: `${baseName}Page`,
     paramsTypeName: `${baseName}Params`,
     resultTypeName: `${baseName}Result`,

@@ -1,0 +1,22 @@
+name: srm-create-settlement
+description: Create an SRM settlement document through a reviewed,
+  approval-gated change-flow Recording Pack.
+metadata:
+  schema_version: flow-v1
+  adapter: sap-srm
+  risk: irreversible
+params:
+  - name: input
+    type: string
+    required: true
+    description: Replace with real business input fields.
+steps:
+  - id: srm_create_settlement
+    action: srm_create_settlement
+    params:
+      input: "{{input}}"
+    expect:
+      - text: SRM settlement creation evidence is captured with settlement number and
+          success message after explicit human approval.
+    requires_approval: true
+    approval_reason: Review the recording and confirm this business operation before execution.

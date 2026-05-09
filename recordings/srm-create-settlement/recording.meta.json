@@ -1,0 +1,15 @@
+{
+  "name": "srm-create-settlement",
+  "domain": "sap-srm",
+  "system": "SAP SRM Portal",
+  "source": [
+    "sop",
+    "manual-recording"
+  ],
+  "goal": "Create an SRM settlement document through a reviewed, approval-gated change-flow Recording Pack.",
+  "expectedResult": "SRM settlement creation evidence is captured with settlement number and success message after explicit human approval.",
+  "riskLevel": "irreversible",
+  "requiresHumanApproval": true,
+  "adapterMethod": "createSettlement",
+  "createdAt": "2026-05-09T09:26:13.380Z"
+}

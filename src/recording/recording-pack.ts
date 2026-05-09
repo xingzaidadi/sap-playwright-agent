@@ -86,6 +86,7 @@ export function createRecordingPack(
     expectedResult: options.expectedResult ?? 'Describe the business success evidence.',
     riskLevel,
     requiresHumanApproval: options.requiresHumanApproval ?? false,
+    adapterMethod: options.adapterMethod,
     createdAt: new Date().toISOString(),
   }
 
@@ -207,6 +208,7 @@ function readRecordingMeta(recordingDir: string): RecordingMeta {
     expectedResult: parsed.expectedResult ?? 'Describe the business success evidence.',
     riskLevel: normalizeRiskLevel(String(parsed.riskLevel ?? 'read-only')),
     requiresHumanApproval: parsed.requiresHumanApproval ?? false,
+    adapterMethod: parsed.adapterMethod,
     createdAt: parsed.createdAt ?? new Date().toISOString(),
   }
 }

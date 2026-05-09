@@ -20,6 +20,7 @@ program
   .option('--expected-result <text>', 'Business success evidence')
   .option('--risk-level <level>', 'read-only | write | irreversible', 'read-only')
   .option('--requires-human-approval', 'Mark this recording as requiring human approval')
+  .option('--adapter-method <method>', 'Existing adapter method to map generated drafts to')
   .action((flowName, opts) => {
     try {
       const result = createRecordingPack(flowName, {
@@ -29,6 +30,7 @@ program
         expectedResult: opts.expectedResult,
         riskLevel: opts.riskLevel,
         requiresHumanApproval: Boolean(opts.requiresHumanApproval),
+        adapterMethod: opts.adapterMethod,
       })
 
       console.log(`\nRecording Pack: ${result.directory}`)

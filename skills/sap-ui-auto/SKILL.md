@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "3.0"
+version: "3.1"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -26,6 +26,7 @@ changelog:
   "2.8": Adapter Registry now exposes a capability catalog with risk, status, approval, action/method mapping, and evidence requirements for SAP ECC and SRM.
   "2.9": Automation Plan and Promotion Gate now consume Adapter capability catalog evidence and surface undeclared, draft, risk, and approval mismatches during review.
   "3.0": Production Flow capability scanner is available via npm run validate-flows; it reports undeclared adapter actions, draft capabilities, risk mismatches, and approval gaps without executing business flows.
+  "3.1": Recording Pack supports adapterMethod overrides; srm-create-settlement is captured as an irreversible change-flow draft mapped to SapSrmAdapter.createSettlement.
 ---
 
 # Web UI Automation Skill
@@ -76,6 +77,9 @@ V3 started:
   Production Flow capability scanning is available through `npm run validate-flows`.
   The scanner is read-only and reports capability gaps in `flows/*.yaml`; it does not
   execute SAP/SRM/OA/CRM business actions.
+  `recordings/srm-create-settlement` is an irreversible change-flow draft mapped to
+  `SapSrmAdapter.createSettlement`; it is ready_for_review only and must not be executed
+  or promoted without explicit human approval and production review.
 ```
 
 Current framing:
