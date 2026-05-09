@@ -38,6 +38,52 @@ interface RecordingMeta {
   createdAt: string
 }
 
+interface AutomationPlan {
+  schema_version: 'automation-plan-v1'
+  recording: {
+    name: string
+    domain: string
+    system: string
+    source: string[]
+  }
+  flow: {
+    name: string
+    adapter: string
+    risk: FlowRiskLevel
+    action: string
+    contract: {
+      valid: boolean
+      errors: number
+      warnings: number
+    }
+  }
+  action: {
+    name: string
+    params: string[]
+    maps_to_adapter_method: string
+  }
+  adapter: {
+    name: string
+    method: string
+    responsibilities: string[]
+  }
+  page_object: {
+    class_name: string
+    methods: string[]
+    boundary: string
+  }
+  safety: {
+    risk: FlowRiskLevel
+    requires_human_approval: boolean
+    approval_reason?: string
+    review_points: string[]
+  }
+  evidence: {
+    expected_result: string
+    artifacts: string[]
+  }
+}
+
 const DEFAULT_DOMAIN = 'sap'
 const DEFAULT_SYSTEM = 'SAP WebGUI'
 
@@ -117,16 +163,18 @@ export function compileRecordingPack(
   const adapterName = `${meta.domain || DEFAULT_DOMAIN}Adapter`
   const flowDraft = buildFlowDraft(meta, actionName)
   const contract = validateFlowContract(flowDraft)
+  const automationPlan = buildAutomationPlan(meta, actionName, pageClassName, flowDraft, contract)
 
   mkdirSync(join(recordingDir, 'drafts'), { recursive: true })
 
   const files: Record<string, string> = {
     'drafts/flow.yaml': flowDraftTemplate(flowDraft),
     'drafts/flow-contract.json': `${JSON.stringify(contract, null, 2)}\n`,
+    'drafts/automation-plan.json': `${JSON.stringify(automationPlan, null, 2)}\n`,
     'drafts/action-registry.md': actionRegistryDraftTemplate(meta, actionName, adapterName),
     'drafts/adapter-method.ts': adapterMethodDraftTemplate(meta, actionName, pageClassName),
     'drafts/page-object-method.ts': pageObjectDraftTemplate(meta, actionName, pageClassName),
-    'drafts/review-checklist.md': reviewChecklistTemplate(meta, actionName, contract),
+    'drafts/review-checklist.md': reviewChecklistTemplate(meta, actionName, automationPlan, contract),
   }
 
   return writeFiles(recordingDir, files, options.force ?? false)
@@ -336,6 +384,84 @@ function flowDraftTemplate(flow: FlowDefinition): string {
   return stringifyYaml(flow)
 }
 
+function buildAutomationPlan(
+  meta: RecordingMeta,
+  actionName: string,
+  pageClassName: string,
+  flowDraft: FlowDefinition,
+  contract: ReturnType<typeof validateFlowContract>
+): AutomationPlan {
+  const adapterName = flowDraft.metadata?.adapter ?? inferAdapterName(meta)
+  const risk = flowDraft.metadata?.risk ?? toFlowRiskLevel(meta.riskLevel)
+  const approvalReason = flowDraft.steps.find(step => step.requires_approval)?.approval_reason
+
+  return {
+    schema_version: 'automation-plan-v1',
+    recording: {
+      name: meta.name,
+      domain: meta.domain,
+      system: meta.system,
+      source: meta.source,
+    },
+    flow: {
+      name: flowDraft.name,
+      adapter: adapterName,
+      risk,
+      action: actionName,
+      contract: {
+        valid: contract.valid,
+        errors: contract.errors.length,
+        warnings: contract.warnings.length,
+      },
+    },
+    action: {
+      name: actionName,
+      params: flowDraft.params.map(param => param.name),
+      maps_to_adapter_method: actionName,
+    },
+    adapter: {
+      name: adapterName,
+      method: actionName,
+      responsibilities: [
+        'Convert business params into system-specific page operations.',
+        'Handle navigation, waits, dialogs, and system messages.',
+        'Return structured business result and evidence.',
+      ],
+    },
+    page_object: {
+      class_name: `${pageClassName}Page`,
+      methods: [
+        'open',
+        `perform${pageClassName}`,
+        'readSuccessEvidence',
+      ],
+      boundary: 'Page Object stays inside Adapter and must not orchestrate cross-system business flow.',
+    },
+    safety: {
+      risk,
+      requires_human_approval: meta.requiresHumanApproval || risk === 'irreversible',
+      approval_reason: approvalReason,
+      review_points: [
+        'Confirm business inputs are current and complete.',
+        'Confirm selectors remain behind Adapter/Page Object, not Flow YAML.',
+        'Confirm irreversible operations have approval gates.',
+        'Confirm success evidence is observable and reportable.',
+      ],
+    },
+    evidence: {
+      expected_result: meta.expectedResult,
+      artifacts: [
+        'drafts/flow.yaml',
+        'drafts/flow-contract.json',
+        'drafts/action-registry.md',
+        'drafts/adapter-method.ts',
+        'drafts/page-object-method.ts',
+        'drafts/review-checklist.md',
+      ],
+    },
+  }
+}
+
 function inferAdapterName(meta: RecordingMeta): string {
   const domain = meta.domain.toLowerCase()
   const system = meta.system.toLowerCase()
@@ -364,6 +490,8 @@ function toFlowRiskLevel(riskLevel: RecordingRiskLevel): FlowRiskLevel {
 function actionRegistryDraftTemplate(meta: RecordingMeta, actionName: string, adapterName: string): string {
   return `# Action Registry Draft: ${actionName}
 
+Start from \`automation-plan.json\`. This file is a human-readable action mapping draft.
+
 ## Source
 
 - Recording: ${meta.name}
@@ -389,7 +517,7 @@ registerAction('${actionName}', async (ctx, params) => {
 }
 
 function adapterMethodDraftTemplate(meta: RecordingMeta, actionName: string, pageClassName: string): string {
-  return `// Draft only. Review before production use.
+  return `// Draft only. Review automation-plan.json before production use.
 export async function ${actionName}(params: Record<string, unknown>) {
   // Adapter responsibility:
   // - convert business params into page operations
@@ -411,7 +539,7 @@ export async function ${actionName}(params: Record<string, unknown>) {
 }
 
 function pageObjectDraftTemplate(meta: RecordingMeta, actionName: string, pageClassName: string): string {
-  return `// Draft only. Page Object stays inside the Adapter.
+  return `// Draft only. Page Object stays inside the Adapter. Review automation-plan.json first.
 export class ${pageClassName}Page {
   constructor(private readonly page: import('playwright').Page) {}
 
@@ -439,13 +567,17 @@ export class ${pageClassName}Page {
 function reviewChecklistTemplate(
   meta: RecordingMeta,
   actionName: string,
+  plan: AutomationPlan,
   contract: ReturnType<typeof validateFlowContract>
 ): string {
   return `# Review Checklist: ${meta.name}
 
+Primary review artifact: \`automation-plan.json\`
+
 ## Flow
 
 - [ ] Flow step uses business action name: \`${actionName}\`.
+- [ ] Automation plan reviewed: \`${plan.schema_version}\`.
 - [ ] Flow params contain business data, not selectors.
 - [ ] Flow has clear success evidence.
 - [ ] Flow metadata declares schema version, adapter, and risk.

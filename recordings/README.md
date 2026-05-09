@@ -6,6 +6,7 @@ It is not traditional RPA-style record-and-playback. A Recording Pack captures S
 
 - Flow YAML
 - Flow Contract validation result
+- Automation Plan
 - Action Registry entries
 - Adapter methods
 - Page Object methods
@@ -31,6 +32,7 @@ The compiler creates:
 
 - `drafts/flow.yaml`
 - `drafts/flow-contract.json`
+- `drafts/automation-plan.json`
 - `drafts/action-registry.md`
 - `drafts/adapter-method.ts`
 - `drafts/page-object-method.ts`
@@ -72,6 +74,7 @@ Use recording as capture, not playback:
 SOP / screenshots / manual recording / trace / a11y tree
   -> Recording Pack
   -> Flow draft + Flow Contract validation
+  -> Automation Plan
   -> Action draft
   -> Adapter draft
   -> Page Object draft

@@ -54,6 +54,7 @@ describe('recording-pack', () => {
       expect.arrayContaining([
         expect.stringContaining('drafts/flow.yaml'),
         expect.stringContaining('drafts/flow-contract.json'),
+        expect.stringContaining('drafts/automation-plan.json'),
         expect.stringContaining('drafts/action-registry.md'),
         expect.stringContaining('drafts/adapter-method.ts'),
         expect.stringContaining('drafts/page-object-method.ts'),
@@ -76,6 +77,22 @@ describe('recording-pack', () => {
     const contract = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'flow-contract.json'), 'utf-8'))
     expect(contract.valid).toBe(true)
     expect(contract.errors).toHaveLength(0)
+
+    const plan = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan.json'), 'utf-8'))
+    expect(plan.schema_version).toBe('automation-plan-v1')
+    expect(plan.flow).toMatchObject({
+      name: 'query-po-history',
+      adapter: 'sap-ecc',
+      risk: 'read_only',
+      action: 'query_po_history',
+    })
+    expect(plan.action).toMatchObject({
+      name: 'query_po_history',
+      params: ['input'],
+      maps_to_adapter_method: 'query_po_history',
+    })
+    expect(plan.page_object.class_name).toBe('QueryPoHistoryPage')
+    expect(plan.evidence.artifacts).toContain('drafts/flow-contract.json')
   })
 
   it('compiles SRM irreversible recordings with approval gates', () => {
@@ -103,6 +120,11 @@ describe('recording-pack', () => {
     const contract = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'flow-contract.json'), 'utf-8'))
     expect(contract.valid).toBe(true)
     expect(contract.errors).toHaveLength(0)
+
+    const plan = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan.json'), 'utf-8'))
+    expect(plan.flow.adapter).toBe('sap-srm')
+    expect(plan.safety.requires_human_approval).toBe(true)
+    expect(plan.safety.approval_reason).toContain('Review the recording')
   })
 
   it('rejects unsafe recording names', () => {
