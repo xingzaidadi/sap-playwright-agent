@@ -1,0 +1,81 @@
+{
+  "candidates": [
+    {
+      "step": 1,
+      "role": "link",
+      "label": "",
+      "text": "Manage Settlement",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Candidate only. Final implementation should use actual SRM portal evidence from recording."
+    },
+    {
+      "step": 2,
+      "role": "textbox",
+      "label": "Settlement Number",
+      "text": "",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "high",
+      "note": "Prefer business label over generated DOM id. Do not hard-code real settlement ids."
+    },
+    {
+      "step": 2,
+      "role": "button",
+      "label": "Query",
+      "text": "Query",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Query completion must be verified by result evidence, not by click completion."
+    },
+    {
+      "step": 3,
+      "role": "row",
+      "label": "",
+      "text": "{{settlement_id}}",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "The row selector must be paired with current status and business context evidence."
+    },
+    {
+      "step": 5,
+      "role": "button",
+      "label": "Confirm Settlement",
+      "text": "Confirm Settlement",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Opening confirmation is not enough; final submit must stay approval-gated."
+    },
+    {
+      "step": 6,
+      "role": "dialog",
+      "label": "Address",
+      "text": "Address",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "low",
+      "note": "Optional dialog from old flow. Treat as auto-exempt until real recording proves exact behavior."
+    },
+    {
+      "step": 8,
+      "role": "button",
+      "label": "Submit",
+      "text": "Submit",
+      "testId": "",
+      "css": "",
+      "xpath": "",
+      "stability": "medium",
+      "note": "Final irreversible submit must be behind a human approval gate."
+    }
+  ]
+}

@@ -87,6 +87,7 @@ export function createRecordingPack(
     riskLevel,
     requiresHumanApproval: options.requiresHumanApproval ?? false,
     adapterMethod: options.adapterMethod,
+    params: options.params,
     createdAt: new Date().toISOString(),
   }
 
@@ -209,6 +210,28 @@ function readRecordingMeta(recordingDir: string): RecordingMeta {
     riskLevel: normalizeRiskLevel(String(parsed.riskLevel ?? 'read-only')),
     requiresHumanApproval: parsed.requiresHumanApproval ?? false,
     adapterMethod: parsed.adapterMethod,
+    params: normalizeRecordingParams(parsed.params),
     createdAt: parsed.createdAt ?? new Date().toISOString(),
   }
+}
+
+function normalizeRecordingParams(value: unknown): RecordingMeta['params'] {
+  if (!Array.isArray(value)) {
+    return undefined
+  }
+
+  return value
+    .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
+    .filter(item => typeof item.name === 'string' && item.name.length > 0)
+    .map(item => ({
+      name: String(item.name),
+      type: isFlowParamType(item.type) ? item.type : 'string',
+      required: typeof item.required === 'boolean' ? item.required : true,
+      default: item.default,
+      description: typeof item.description === 'string' ? item.description : undefined,
+    }))
+}
+
+function isFlowParamType(value: unknown): value is NonNullable<RecordingMeta['params']>[number]['type'] {
+  return value === 'string' || value === 'number' || value === 'boolean' || value === 'array' || value === 'object'
 }

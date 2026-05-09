@@ -1,0 +1,23 @@
+{
+  "name": "srm-confirm-settlement",
+  "domain": "sap-srm",
+  "system": "SAP SRM Portal",
+  "source": [
+    "sop",
+    "manual-recording"
+  ],
+  "goal": "Confirm an existing SRM settlement document through a reviewed, approval-gated change-flow Recording Pack.",
+  "expectedResult": "SRM settlement confirmation evidence is captured with visible confirmation status or success message after explicit human approval.",
+  "riskLevel": "irreversible",
+  "requiresHumanApproval": true,
+  "adapterMethod": "confirmSettlement",
+  "params": [
+    {
+      "name": "settlement_id",
+      "type": "string",
+      "required": true,
+      "description": "SRM settlement document number to confirm."
+    }
+  ],
+  "createdAt": "2026-05-09T10:37:44.052Z"
+}

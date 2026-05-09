@@ -1,4 +1,5 @@
 import type { FlowDefinition } from '../engine/types.js'
+import type { FlowParam } from '../engine/types.js'
 import {
   toAdapterInterfaceName,
   toCamelCase,
@@ -32,6 +33,7 @@ export function buildCodeDraftModel(
     approvalReason: flowDraft.steps.find(step => step.requires_approval)?.approval_reason,
     expectedResult: meta.expectedResult,
     system: meta.system,
+    params: flowDraft.params,
   }
 }
 
@@ -63,7 +65,7 @@ registry.register({
   async execute({ getAdapter, resolvedParams }) {
     const ${code.adapterVariableName} = getAdapter<${code.adapterInterfaceName}>(${code.adapterConstantName})
     return await ${code.adapterVariableName}.${code.methodName}({
-      input: resolvedParams.input as string,
+${renderResolvedParamMappings(code.params)}
     })
   },
 })
@@ -82,7 +84,7 @@ export function adapterMethodDraftTemplate(code: CodeDraftModel): string {
 import { ${code.pageClassName} } from './page-object-method.js'
 
 export interface ${code.paramsTypeName} {
-  input: string
+${renderInterfaceFields(code.params)}
 }
 
 export interface ${code.resultTypeName} {
@@ -152,4 +154,31 @@ export class ${code.pageClassName} {
 
 function escapeTsString(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+}
+
+function renderResolvedParamMappings(params: FlowParam[]): string {
+  return params
+    .map(param => `      ${param.name}: resolvedParams.${param.name} as ${toTsType(param.type)},`)
+    .join('\n')
+}
+
+function renderInterfaceFields(params: FlowParam[]): string {
+  return params
+    .map(param => `  ${param.name}${param.required === false ? '?' : ''}: ${toTsType(param.type)}`)
+    .join('\n')
+}
+
+function toTsType(type: FlowParam['type']): string {
+  switch (type) {
+    case 'number':
+      return 'number'
+    case 'boolean':
+      return 'boolean'
+    case 'array':
+      return 'unknown[]'
+    case 'object':
+      return 'Record<string, unknown>'
+    case 'string':
+      return 'string'
+  }
 }

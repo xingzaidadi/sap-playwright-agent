@@ -1,4 +1,4 @@
-import type { FlowRiskLevel } from '../engine/types.js'
+import type { FlowParam, FlowRiskLevel } from '../engine/types.js'
 import type { AdapterCapabilityStatus } from '../engine/adapters/types.js'
 
 export type RecordingRiskLevel = 'read-only' | 'write' | 'irreversible'
@@ -12,6 +12,7 @@ export interface CreateRecordingPackOptions {
   riskLevel?: RecordingRiskLevel
   requiresHumanApproval?: boolean
   adapterMethod?: string
+  params?: FlowParam[]
 }
 
 export interface CompileRecordingPackOptions {
@@ -34,6 +35,7 @@ export interface RecordingMeta {
   riskLevel: RecordingRiskLevel
   requiresHumanApproval: boolean
   adapterMethod?: string
+  params?: FlowParam[]
   createdAt: string
 }
 
@@ -159,4 +161,5 @@ export interface CodeDraftModel {
   approvalReason?: string
   expectedResult: string
   system: string
+  params: FlowParam[]
 }

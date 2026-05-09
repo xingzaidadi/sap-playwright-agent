@@ -108,10 +108,10 @@ describe('flow-capabilities', () => {
     )
   })
 
-  it('warns but does not fail for planned SRM split capabilities when approval is present', () => {
+  it('warns but does not fail for draft SRM split capabilities when approval is present', () => {
     const result = validateFlowCapabilities({
-      name: 'srm-confirm-settlement-planned',
-      description: 'Confirm SRM settlement through planned split capability.',
+      name: 'srm-confirm-settlement-draft',
+      description: 'Confirm SRM settlement through draft split capability.',
       metadata: {
         schema_version: 'flow-v1',
         adapter: 'sap-srm',
@@ -133,7 +133,7 @@ describe('flow-capabilities', () => {
       expect.arrayContaining([
         expect.objectContaining({
           path: 'steps[0].action',
-          message: expect.stringContaining('status=planned'),
+          message: expect.stringContaining('status=draft'),
         }),
       ])
     )

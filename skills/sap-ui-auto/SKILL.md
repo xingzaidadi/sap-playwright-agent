@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "3.3"
+version: "3.4"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -29,6 +29,7 @@ changelog:
   "3.1": Recording Pack supports adapterMethod overrides; srm-create-settlement is captured as an irreversible change-flow draft mapped to SapSrmAdapter.createSettlement.
   "3.2": SRM create settlement now has a business-level `srm_create_settlement` action aligned with the `createSettlement` capability while legacy `srm_operation` remains compatible.
   "3.3": SRM generate-invoice split is documented; `confirmSettlement` and `generateInvoice` are declared as planned capabilities while legacy `confirmAndGenerateInvoice` remains implemented.
+  "3.4": `recordings/srm-confirm-settlement` is a dedicated draft Recording Pack; Recording metadata can declare explicit Flow params; `confirmSettlement` is now a draft capability while `generateInvoice` remains planned.
 ---
 
 # Web UI Automation Skill
@@ -86,10 +87,12 @@ V3 started:
   `SapSrmAdapter.createSettlement`; prefer it for new Flow drafts instead of the
   umbrella `srm_operation` action.
   `srm-generate-invoice` is assessed as a legacy combined irreversible capability.
-  `confirmSettlement` and `generateInvoice` are planned split capabilities, not
-  production implemented methods. Do not promote Flow drafts using
-  `srm_confirm_settlement` or `srm_generate_invoice` until dedicated Recording Pack
-  evidence, adapter methods, approval gates, and dry-run review exist.
+  `recordings/srm-confirm-settlement` is a dedicated irreversible change-flow draft
+  mapped to `SapSrmAdapter.confirmSettlement`; it is ready_for_review only and must
+  not be executed or promoted without explicit human approval and production review.
+  `generateInvoice` remains a planned split capability, not a production implemented
+  method. Do not promote Flow drafts using `srm_generate_invoice` until dedicated
+  Recording Pack evidence, adapter methods, approval gates, and dry-run review exist.
 ```
 
 Current framing:

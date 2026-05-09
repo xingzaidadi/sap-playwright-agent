@@ -1,0 +1,46 @@
+{
+  "waits": [
+    {
+      "step": 1,
+      "waitFor": "SRM settlement management/search screen is visible",
+      "evidence": "A settlement search form or management title is visible.",
+      "timeoutMs": 30000,
+      "antiPattern": "Do not use fixed sleeps unless there is no observable state."
+    },
+    {
+      "step": 2,
+      "waitFor": "Settlement query has completed",
+      "evidence": "Target row, explicit no-result message, or validation error is visible.",
+      "timeoutMs": 45000,
+      "antiPattern": "Do not assume query completed because the click returned."
+    },
+    {
+      "step": 3,
+      "waitFor": "Target settlement row evidence is visible",
+      "evidence": "Settlement id, current status, supplier/company context, and amount are visible.",
+      "timeoutMs": 30000,
+      "antiPattern": "Do not select or confirm a row that cannot be tied to the current settlement id."
+    },
+    {
+      "step": 6,
+      "waitFor": "Address or confirmation dialog is either handled or explicitly absent",
+      "evidence": "Dialog choice is captured before submit, or absence is recorded after opening confirmation.",
+      "timeoutMs": 30000,
+      "antiPattern": "Auto mode must not skip dialogs that affect submitted business state."
+    },
+    {
+      "step": 7,
+      "waitFor": "Human approval evidence is present",
+      "evidence": "Reviewer approval is recorded before the final confirmation action.",
+      "timeoutMs": 30000,
+      "antiPattern": "Auto mode must not skip final confirmation approval."
+    },
+    {
+      "step": 8,
+      "waitFor": "SRM confirmation success message or confirmed status is visible",
+      "evidence": "Current-run success message plus settlement id/final status are visible.",
+      "timeoutMs": 45000,
+      "antiPattern": "Do not claim COMPLETE without current-run confirmation evidence or explicit blocked state."
+    }
+  ]
+}

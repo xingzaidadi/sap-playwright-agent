@@ -66,26 +66,34 @@ describe('adapter capability catalog', () => {
     expect(irreversibleCapabilities.every(capability => capability.requiresHumanApproval)).toBe(true)
   })
 
-  it('keeps SRM query as the only read-only draft capability', () => {
+  it('separates read-only and irreversible draft capabilities', () => {
     const registry = createDefaultAdapterRegistry()
     const draftCapabilities = registry
       .listCapabilities(SAP_SRM_ADAPTER)
       .filter((capability: AdapterCapability) => capability.status === 'draft')
 
-    expect(draftCapabilities).toHaveLength(1)
-    expect(draftCapabilities[0]).toMatchObject({
+    expect(draftCapabilities.map(capability => capability.name)).toEqual([
+      'srmQuerySettlementStatus',
+      'confirmSettlement',
+    ])
+    expect(draftCapabilities.find(capability => capability.name === 'srmQuerySettlementStatus')).toMatchObject({
       name: 'srmQuerySettlementStatus',
       risk: 'read_only',
       requiresHumanApproval: false,
     })
+    expect(draftCapabilities.find(capability => capability.name === 'confirmSettlement')).toMatchObject({
+      name: 'confirmSettlement',
+      risk: 'irreversible',
+      requiresHumanApproval: true,
+    })
   })
 
-  it('declares invoice split capabilities as planned, not implemented', () => {
+  it('tracks invoice split capability maturity separately', () => {
     const registry = createDefaultAdapterRegistry()
 
     expect(registry.getCapability(SAP_SRM_ADAPTER, 'confirmSettlement')).toMatchObject({
       action: 'srm_confirm_settlement',
-      status: 'planned',
+      status: 'draft',
       risk: 'irreversible',
       requiresHumanApproval: true,
     })

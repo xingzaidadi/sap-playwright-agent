@@ -91,10 +91,10 @@ export const SAP_SRM_CAPABILITIES: AdapterCapability[] = [
     action: 'srm_confirm_settlement',
     method: 'confirmSettlement',
     risk: 'irreversible',
-    status: 'planned',
+    status: 'draft',
     requiresHumanApproval: true,
     evidence: ['settlement confirmation status is visible', 'SRM confirmation success message is captured'],
-    notes: 'Planned split from confirmAndGenerateInvoice. Do not promote before a dedicated Recording Pack and adapter method exist.',
+    notes: 'Draft split from confirmAndGenerateInvoice. Recording Pack exists at recordings/srm-confirm-settlement; do not promote before adapter method review and production approval.',
   },
   {
     name: 'generateInvoice',

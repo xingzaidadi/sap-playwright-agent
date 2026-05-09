@@ -44,7 +44,7 @@ describe('AdapterRegistry', () => {
     expect(registry.getCapability('sap-srm', 'confirmSettlement')).toMatchObject({
       action: 'srm_confirm_settlement',
       risk: 'irreversible',
-      status: 'planned',
+      status: 'draft',
       requiresHumanApproval: true,
     })
   })

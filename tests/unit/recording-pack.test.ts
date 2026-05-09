@@ -264,6 +264,56 @@ describe('recording-pack', () => {
     })
   })
 
+  it('uses explicit recording params in generated Flow and code drafts', () => {
+    const projectRoot = makeTempRoot()
+    createRecordingPack('srm-confirm-settlement', {
+      projectRoot,
+      domain: 'sap-srm',
+      system: 'SAP SRM Portal',
+      riskLevel: 'irreversible',
+      requiresHumanApproval: true,
+      adapterMethod: 'confirmSettlement',
+      params: [
+        {
+          name: 'settlement_id',
+          type: 'string',
+          required: true,
+          description: 'SRM settlement document number to confirm.',
+        },
+      ],
+    })
+
+    const recordingDir = join(projectRoot, 'recordings', 'srm-confirm-settlement')
+    compileRecordingPack(recordingDir)
+
+    const flowDraft = parseYaml(readFileSync(join(recordingDir, 'drafts', 'flow.yaml'), 'utf-8'))
+    expect(flowDraft.params).toEqual([
+      {
+        name: 'settlement_id',
+        type: 'string',
+        required: true,
+        description: 'SRM settlement document number to confirm.',
+      },
+    ])
+    expect(flowDraft.steps[0].params).toEqual({
+      settlement_id: '{{settlement_id}}',
+    })
+
+    const plan = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan.json'), 'utf-8'))
+    expect(plan.action.params).toEqual(['settlement_id'])
+    expect(plan.adapter.capability).toMatchObject({
+      declared: true,
+      name: 'confirmSettlement',
+      status: 'draft',
+    })
+
+    const actionDraft = readFileSync(join(recordingDir, 'drafts', 'action-registry.md'), 'utf-8')
+    expect(actionDraft).toContain('settlement_id: resolvedParams.settlement_id as string')
+
+    const adapterDraft = readFileSync(join(recordingDir, 'drafts', 'adapter-method.ts'), 'utf-8')
+    expect(adapterDraft).toContain('settlement_id: string')
+  })
+
   it('validates Automation Plan consistency', () => {
     const plan: AutomationPlan = {
       schema_version: 'automation-plan-v1',
@@ -369,6 +419,7 @@ describe('recording-pack', () => {
       requiresHumanApproval: false,
       expectedResult: 'Document is submitted.',
       system: 'SAP WebGUI',
+      params: [{ name: 'input', type: 'string', required: true }],
     }
     const plan: AutomationPlan = {
       schema_version: 'automation-plan-v1',

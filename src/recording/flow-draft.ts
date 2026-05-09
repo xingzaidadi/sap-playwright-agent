@@ -1,15 +1,14 @@
 import { stringify as stringifyYaml } from 'yaml'
-import type { FlowDefinition, FlowRiskLevel, FlowStep } from '../engine/types.js'
+import type { FlowDefinition, FlowParam, FlowRiskLevel, FlowStep } from '../engine/types.js'
 import type { RecordingMeta, RecordingRiskLevel } from './types.js'
 
 export function buildFlowDraft(meta: RecordingMeta, actionName: string): FlowDefinition {
   const risk = toFlowRiskLevel(meta.riskLevel)
+  const params = buildFlowParams(meta)
   const step: FlowStep = {
     id: actionName,
     action: actionName,
-    params: {
-      input: '{{input}}',
-    },
+    params: Object.fromEntries(params.map(param => [param.name, `{{${param.name}}}`])),
     expect: [
       {
         text: meta.expectedResult,
@@ -30,16 +29,30 @@ export function buildFlowDraft(meta: RecordingMeta, actionName: string): FlowDef
       adapter: inferAdapterName(meta),
       risk,
     },
-    params: [
-      {
-        name: 'input',
-        type: 'string',
-        required: true,
-        description: 'Replace with real business input fields.',
-      },
-    ],
+    params,
     steps: [step],
   }
+}
+
+function buildFlowParams(meta: RecordingMeta): FlowParam[] {
+  if (meta.params && meta.params.length > 0) {
+    return meta.params.map(param => ({
+      name: param.name,
+      type: param.type,
+      required: param.required ?? true,
+      default: param.default,
+      description: param.description,
+    }))
+  }
+
+  return [
+    {
+      name: 'input',
+      type: 'string',
+      required: true,
+      description: 'Replace with real business input fields.',
+    },
+  ]
 }
 
 export function flowDraftTemplate(flow: FlowDefinition): string {
