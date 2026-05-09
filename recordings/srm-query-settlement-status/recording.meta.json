@@ -10,5 +10,14 @@
   "expectedResult": "The SRM settlement status is visible on screen and captured as evidence with settlement number, supplier, status, and last update information when available.",
   "riskLevel": "read-only",
   "requiresHumanApproval": false,
+  "adapterMethod": "srmQuerySettlementStatus",
+  "params": [
+    {
+      "name": "settlement_number",
+      "type": "string",
+      "required": true,
+      "description": "SRM settlement document number to query."
+    }
+  ],
   "createdAt": "2026-05-09T06:43:01.166Z"
 }

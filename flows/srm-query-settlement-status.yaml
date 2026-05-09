@@ -1,0 +1,19 @@
+name: srm-query-settlement-status
+description: Query SRM settlement status without changing any business document.
+metadata:
+  schema_version: flow-v1
+  adapter: sap-srm
+  risk: read_only
+params:
+  - name: settlement_number
+    type: string
+    required: true
+    description: SRM settlement document number to query.
+steps:
+  - id: query_status
+    action: srm_query_settlement_status
+    params:
+      settlement_number: "{{settlement_number}}"
+    expect:
+      - text: Settlement number and current status evidence are visible.
+    output: settlement_status

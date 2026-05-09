@@ -33,7 +33,7 @@ describe('AdapterRegistry', () => {
     expect(registry.getCapability('sap-srm', 'srmQuerySettlementStatus')).toMatchObject({
       action: 'srm_query_settlement_status',
       risk: 'read_only',
-      status: 'draft',
+      status: 'implemented',
       requiresHumanApproval: false,
     })
     expect(registry.getCapability('sap-srm', 'confirmAndGenerateInvoice')).toMatchObject({

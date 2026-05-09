@@ -55,6 +55,15 @@ export function registerIntegrationActions(registry: ActionRegistry): void {
       },
     })
     .register({
+      name: 'srm_query_settlement_status',
+      async execute({ getAdapter, resolvedParams }) {
+        const srm = getAdapter<SapSrmAdapter>(SAP_SRM_ADAPTER)
+        return await srm.srmQuerySettlementStatus({
+          settlementNumber: resolvedParams.settlement_number as string,
+        })
+      },
+    })
+    .register({
       name: 'srm_create_settlement',
       async execute({ getAdapter, resolvedParams }) {
         const srm = getAdapter<SapSrmAdapter>(SAP_SRM_ADAPTER)

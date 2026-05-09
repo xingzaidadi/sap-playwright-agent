@@ -24,7 +24,7 @@ interface RecordingAutomationPlan {
 }
 
 describe('adapter capability catalog', () => {
-  it('maps the SRM read-only Recording Pack draft to a declared adapter capability', () => {
+  it('maps the SRM read-only Recording Pack to a declared implemented adapter capability', () => {
     const registry = createDefaultAdapterRegistry()
     const plan = JSON.parse(
       readFileSync('recordings/srm-query-settlement-status/drafts/automation-plan.json', 'utf-8')
@@ -37,7 +37,7 @@ describe('adapter capability catalog', () => {
       action: plan.action.name,
       method: plan.adapter.method,
       risk: plan.flow.risk,
-      status: 'draft',
+      status: 'implemented',
       requiresHumanApproval: plan.safety.requires_human_approval,
     })
     expect(plan.adapter.capability).toMatchObject({
@@ -46,7 +46,7 @@ describe('adapter capability catalog', () => {
       action: plan.action.name,
       method: plan.adapter.method,
       risk: plan.flow.risk,
-      status: 'draft',
+      status: 'implemented',
       requires_human_approval: false,
     })
   })
@@ -66,22 +66,16 @@ describe('adapter capability catalog', () => {
     expect(irreversibleCapabilities.every(capability => capability.requiresHumanApproval)).toBe(true)
   })
 
-  it('separates read-only and irreversible draft capabilities', () => {
+  it('tracks irreversible draft capabilities after the read-only query is implemented', () => {
     const registry = createDefaultAdapterRegistry()
     const draftCapabilities = registry
       .listCapabilities(SAP_SRM_ADAPTER)
       .filter((capability: AdapterCapability) => capability.status === 'draft')
 
     expect(draftCapabilities.map(capability => capability.name)).toEqual([
-      'srmQuerySettlementStatus',
       'confirmSettlement',
       'generateInvoice',
     ])
-    expect(draftCapabilities.find(capability => capability.name === 'srmQuerySettlementStatus')).toMatchObject({
-      name: 'srmQuerySettlementStatus',
-      risk: 'read_only',
-      requiresHumanApproval: false,
-    })
     expect(draftCapabilities.find(capability => capability.name === 'confirmSettlement')).toMatchObject({
       name: 'confirmSettlement',
       risk: 'irreversible',

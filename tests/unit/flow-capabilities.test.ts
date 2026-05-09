@@ -78,7 +78,7 @@ describe('flow-capabilities', () => {
     expect(result.errors.map(error => error.path)).toContain('steps[0].requires_approval')
   })
 
-  it('warns but does not fail for declared draft capabilities', () => {
+  it('passes implemented read-only SRM capabilities', () => {
     const result = validateFlowCapabilities({
       name: 'srm-query-settlement-status',
       description: 'Query SRM settlement status.',
@@ -92,20 +92,18 @@ describe('flow-capabilities', () => {
         {
           id: 'query',
           action: 'srm_query_settlement_status',
-          params: { input: '{{input}}' },
+          params: { settlement_number: '{{settlement_number}}' },
         },
       ],
     })
 
     expect(result.valid).toBe(true)
-    expect(result.warnings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          path: 'steps[0].action',
-          message: expect.stringContaining('status=draft'),
-        }),
-      ])
-    )
+    expect(result.errors).toHaveLength(0)
+    expect(result.warnings).toHaveLength(0)
+    expect(result.steps[0]).toMatchObject({
+      status: 'matched',
+      capability: 'srmQuerySettlementStatus',
+    })
   })
 
   it('warns but does not fail for draft SRM split capabilities when approval is present', () => {

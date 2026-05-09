@@ -25,7 +25,7 @@ registry.register({
   async execute({ getAdapter, resolvedParams }) {
     const sapSrm = getAdapter<SapSrmAdapter>(SAP_SRM_ADAPTER)
     return await sapSrm.srmQuerySettlementStatus({
-      input: resolvedParams.input as string,
+      settlement_number: resolvedParams.settlement_number as string,
     })
   },
 })

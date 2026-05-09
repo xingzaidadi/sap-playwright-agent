@@ -2,7 +2,7 @@
 import { SrmQuerySettlementStatusPage } from './page-object-method.js'
 
 export interface SrmQuerySettlementStatusParams {
-  input: string
+  settlement_number: string
 }
 
 export interface SrmQuerySettlementStatusResult {

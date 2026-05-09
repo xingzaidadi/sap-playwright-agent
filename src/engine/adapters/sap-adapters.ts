@@ -53,10 +53,10 @@ export const SAP_SRM_CAPABILITIES: AdapterCapability[] = [
     action: 'srm_query_settlement_status',
     method: 'srmQuerySettlementStatus',
     risk: 'read_only',
-    status: 'draft',
+    status: 'implemented',
     requiresHumanApproval: false,
     evidence: ['settlement number', 'supplier', 'status', 'last update or explicit not-found state'],
-    notes: 'V3 first read-only candidate from recordings/srm-query-settlement-status.',
+    notes: 'Read-only production skeleton exists; real SRM environment validation is still required before operational use.',
   },
   {
     name: 'uploadPOScan',

@@ -23,7 +23,7 @@
   "action": {
     "name": "srm_query_settlement_status",
     "params": [
-      "input"
+      "settlement_number"
     ],
     "maps_to_adapter_method": "srmQuerySettlementStatus"
   },
@@ -36,7 +36,7 @@
       "action": "srm_query_settlement_status",
       "method": "srmQuerySettlementStatus",
       "risk": "read_only",
-      "status": "draft",
+      "status": "implemented",
       "requires_human_approval": false,
       "evidence": [
         "settlement number",

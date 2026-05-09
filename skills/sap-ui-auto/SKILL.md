@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "3.5"
+version: "3.6"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -31,6 +31,7 @@ changelog:
   "3.3": SRM generate-invoice split is documented; `confirmSettlement` and `generateInvoice` are declared as planned capabilities while legacy `confirmAndGenerateInvoice` remains implemented.
   "3.4": `recordings/srm-confirm-settlement` is a dedicated draft Recording Pack; Recording metadata can declare explicit Flow params; `confirmSettlement` is now a draft capability while `generateInvoice` remains planned.
   "3.5": `recordings/srm-generate-invoice` is a dedicated draft Recording Pack; `generateInvoice` is now a draft capability with explicit settlement and date params.
+  "3.6": `srmQuerySettlementStatus` now has a read-only production skeleton with Flow, Action, Adapter method, Page Object, explicit `settlement_number` param, and scanner alignment.
 ---
 
 # Web UI Automation Skill
@@ -94,6 +95,9 @@ V3 started:
   `recordings/srm-generate-invoice` is a dedicated irreversible change-flow draft
   mapped to `SapSrmAdapter.generateInvoice`; it is ready_for_review only and must
   not be executed or promoted without explicit human approval and production review.
+  `flows/srm-query-settlement-status.yaml` is the first SRM read-only production
+  skeleton. It calls `srm_query_settlement_status`, maps to
+  `SapSrmAdapter.srmQuerySettlementStatus`, and must remain read-only.
 ```
 
 Current framing:

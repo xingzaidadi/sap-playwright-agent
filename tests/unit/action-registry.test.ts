@@ -19,8 +19,39 @@ describe('ActionRegistry', () => {
       'screenshot',
       'srm_create_settlement',
       'srm_operation',
+      'srm_query_settlement_status',
       'wait',
     ])
+  })
+
+  it('maps srm_query_settlement_status to the SRM adapter read-only query method', async () => {
+    const registry = createDefaultActionRegistry()
+    const srmQuerySettlementStatus = async (params: unknown) => params
+
+    const result = await registry.get('srm_query_settlement_status')?.execute({
+      page: {} as never,
+      step: { id: 'query', action: 'srm_query_settlement_status' },
+      resolvedParams: {
+        settlement_number: '9600000001',
+      },
+      runContext: null,
+      params: {},
+      outputs: {},
+      getAdapter: () => ({ srmQuerySettlementStatus }),
+      evaluateCondition: () => true,
+      runSubFlow: async () => ({
+        flowName: 'noop',
+        success: true,
+        outputs: {},
+        steps: [],
+        screenshots: [],
+        duration: 0,
+      }),
+    })
+
+    expect(result).toEqual({
+      settlementNumber: '9600000001',
+    })
   })
 
   it('maps srm_create_settlement to the SRM adapter createSettlement method', async () => {
