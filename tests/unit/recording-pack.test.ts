@@ -65,6 +65,8 @@ describe('recording-pack', () => {
         expect.stringContaining('drafts/adapter-method.ts'),
         expect.stringContaining('drafts/page-object-method.ts'),
         expect.stringContaining('drafts/review-checklist.md'),
+        expect.stringContaining('drafts/promotion-gate.json'),
+        expect.stringContaining('drafts/promotion-checklist.md'),
       ])
     )
 
@@ -100,6 +102,8 @@ describe('recording-pack', () => {
     expect(plan.page_object.class_name).toBe('QueryPoHistoryPage')
     expect(plan.evidence.artifacts).toContain('drafts/flow-contract.json')
     expect(plan.evidence.artifacts).toContain('drafts/automation-plan-validation.json')
+    expect(plan.evidence.artifacts).toContain('drafts/promotion-gate.json')
+    expect(plan.evidence.artifacts).toContain('drafts/promotion-checklist.md')
 
     const planValidation = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan-validation.json'), 'utf-8'))
     expect(planValidation.valid).toBe(true)
@@ -119,6 +123,34 @@ describe('recording-pack', () => {
     const pageObjectDraft = readFileSync(join(recordingDir, 'drafts', 'page-object-method.ts'), 'utf-8')
     expect(pageObjectDraft).toContain('export class QueryPoHistoryPage')
     expect(pageObjectDraft).toContain('async performQueryPoHistory')
+
+    const promotionGate = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'promotion-gate.json'), 'utf-8'))
+    expect(promotionGate).toMatchObject({
+      schema_version: 'promotion-gate-v1',
+      status: 'ready_for_review',
+      manual_reviewer_required: true,
+      target_files: {
+        flow: 'flows/query-po-history.yaml',
+        action_module: 'src/engine/actions/sap-actions.ts',
+        adapter_module: 'src/engine/adapters/sap-ecc-adapter.ts',
+        page_object_module: 'src/sap/pages/query-po-history-page.ts',
+      },
+    })
+    expect(promotionGate.required_checks.map((item: { id: string }) => item.id)).toEqual(
+      expect.arrayContaining([
+        'flow-contract-valid',
+        'automation-plan-valid',
+        'action-name-reviewed',
+        'adapter-method-reviewed',
+        'page-object-boundary-reviewed',
+        'secrets-and-sensitive-data-reviewed',
+        'production-write-blocked',
+      ])
+    )
+
+    const promotionChecklist = readFileSync(join(recordingDir, 'drafts', 'promotion-checklist.md'), 'utf-8')
+    expect(promotionChecklist).toContain('Primary gate artifact: `promotion-gate.json`')
+    expect(promotionChecklist).toContain('Status: `ready_for_review`')
   })
 
   it('compiles SRM irreversible recordings with approval gates', () => {
@@ -156,6 +188,19 @@ describe('recording-pack', () => {
     const planValidation = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'automation-plan-validation.json'), 'utf-8'))
     expect(planValidation.valid).toBe(true)
     expect(planValidation.errors).toHaveLength(0)
+
+    const promotionGate = JSON.parse(readFileSync(join(recordingDir, 'drafts', 'promotion-gate.json'), 'utf-8'))
+    expect(promotionGate.status).toBe('ready_for_review')
+    expect(promotionGate.target_files).toMatchObject({
+      action_module: 'src/engine/actions/sap-actions.ts',
+      adapter_module: 'src/engine/adapters/sap-srm-adapter.ts',
+      page_object_module: 'src/sap/srm/pages/create-settlement-page.ts',
+    })
+    expect(
+      promotionGate.required_checks.find((item: { id: string }) => item.id === 'risk-and-approval-reviewed')
+    ).toMatchObject({
+      status: 'manual_review',
+    })
   })
 
   it('validates Automation Plan consistency', () => {
@@ -205,6 +250,8 @@ describe('recording-pack', () => {
           'drafts/adapter-method.ts',
           'drafts/page-object-method.ts',
           'drafts/review-checklist.md',
+          'drafts/promotion-gate.json',
+          'drafts/promotion-checklist.md',
         ],
       },
     }

@@ -43,6 +43,10 @@ export type {
   AutomationPlanValidationResult,
   CompileRecordingPackOptions,
   CreateRecordingPackOptions,
+  PromotionGate,
+  PromotionGateCheck,
+  PromotionGateCheckStatus,
+  PromotionGateStatus,
   RecordingPackResult,
   RecordingRiskLevel,
 } from './recording/recording-pack.js'

@@ -12,6 +12,7 @@ It is not traditional RPA-style record-and-playback. A Recording Pack captures S
 - typed Adapter method drafts
 - typed Page Object method drafts
 - Review checklists
+- Promotion Gate review artifacts
 
 ## Template
 
@@ -39,6 +40,8 @@ The compiler creates:
 - `drafts/adapter-method.ts`
 - `drafts/page-object-method.ts`
 - `drafts/review-checklist.md`
+- `drafts/promotion-gate.json`
+- `drafts/promotion-checklist.md`
 
 Use `_template/` only when you need to copy the structure manually:
 
@@ -80,6 +83,7 @@ SOP / screenshots / manual recording / trace / a11y tree
   -> Action mapping draft
   -> typed Adapter method draft
   -> typed Page Object method draft
+  -> Promotion Gate
   -> Human review
   -> dry-run
   -> real run
