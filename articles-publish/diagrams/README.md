@@ -5,9 +5,14 @@
 | 文件 | 建议放在哪篇文章 | 说明 |
 |------|------------------|------|
 | `01-framework-overview.html` | 01 总论 | 通用企业 Web 自动化框架总览 |
+| `03-flow-engine-pipeline.html` | 03 Flow Engine | YAML → 校验 → dry-run → 执行 → 报告的完整链路 |
+| `04-action-registry-routing.html` | 04 Action Registry | Flow → Registry → Adapter → Page Object 路由图 |
+| `06-ai-role-boundary.html` | 06 AI 角色 | AI 做什么 vs 确定性代码做什么，以及不可绕过的边界 |
 | `07-adapter-first-page-object-inside.html` | 07 Page Object 踩坑 | Page Object 不是最高抽象 |
 | `08-capture-not-playback.html` | 08 录制采集层 | Capture, not Playback |
 | `08-recording-pack-v1-cli.html` | 08 录制采集层 | Recording Pack V1 CLI 闭环 |
+| `09-v1-v3-roadmap.html` | 09 V1 到 V3 路线图 | 从 SAP 自动化项目收敛成通用企业 Web 自动化框架 |
+| `09-v3-warning-trend.html` | 09 V3 收口 | Flow Scanner warning 从 60 降到 35 的工程证据 |
 
 配图口径：
 

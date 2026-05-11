@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Flow Engine 执行链路</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #5f6b7a;
+      --line: #cfd8e3;
+      --bg: #f6f8fb;
+      --core: #1f7a8c;
+      --highlight: #e8f4f8;
+      --warn: #b45f06;
+      --success: #276749;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .frame {
+      width: 1200px;
+      height: 675px;
+      padding: 44px 56px;
+      background: linear-gradient(180deg, #ffffff 0%, #f2f6fa 100%);
+    }
+    h1 { margin: 0; font-size: 34px; }
+    .subtitle { margin-top: 8px; color: var(--muted); font-size: 18px; }
+    .pipeline {
+      margin-top: 48px;
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+    .step {
+      flex: 1;
+      position: relative;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 28px 20px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .step + .step { margin-left: 16px; }
+    .step::after {
+      content: "\2192";
+      position: absolute;
+      right: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 22px;
+      color: var(--core);
+      font-weight: bold;
+      z-index: 1;
+    }
+    .step:last-child::after { content: none; }
+    .step-num {
+      display: inline-flex;
+      width: 32px; height: 32px;
+      align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: var(--core);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .step h3 { margin: 14px 0 8px; font-size: 19px; }
+    .step p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+    .compare {
+      margin-top: 44px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .compare-box {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 24px;
+      background: #fff;
+    }
+    .compare-box.bad { border-left: 4px solid var(--warn); }
+    .compare-box.good { border-left: 4px solid var(--success); }
+    .compare-box h4 { margin: 0 0 12px; font-size: 18px; }
+    .compare-box pre {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--muted);
+      white-space: pre-wrap;
+    }
+    .compare-box.bad h4 { color: var(--warn); }
+    .compare-box.good h4 { color: var(--success); }
+
+    .footer {
+      margin-top: 28px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <h1>Flow Engine：从 YAML 到可审计的执行结果</h1>
+    <div class="subtitle">脚本解决一次执行，Flow Engine 解决长期维护</div>
+
+    <section class="pipeline">
+      <div class="step">
+        <span class="step-num">1</span>
+        <h3>加载 YAML</h3>
+        <p>解析 Flow 定义<br>提取 params、steps、metadata</p>
+      </div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <h3>参数校验</h3>
+        <p>检查必填参数<br>类型匹配<br>缺参即停</p>
+      </div>
+      <div class="step">
+        <span class="step-num">3</span>
+        <h3>Dry-run</h3>
+        <p>不打开浏览器<br>预览流程路径<br>验证分支逻辑</p>
+      </div>
+      <div class="step">
+        <span class="step-num">4</span>
+        <h3>执行 Steps</h3>
+        <p>逐步调用 Action<br>on_error 策略<br>条件分支 / 子流程</p>
+      </div>
+      <div class="step">
+        <span class="step-num">5</span>
+        <h3>Report</h3>
+        <p>HTML 报告<br>截图 + Trace<br>步骤耗时 + 结果</p>
+      </div>
+    </section>
+
+    <section class="compare">
+      <div class="compare-box bad">
+        <h4>脚本方式</h4>
+        <pre>await login()
+await page.click('#btn')
+await page.fill('#input', value)
+// 失败了？翻控制台日志吧...</pre>
+      </div>
+      <div class="compare-box good">
+        <h4>Flow 方式</h4>
+        <pre>name: goods-receipt
+steps:
+  - action: navigate_tcode
+  - action: fill_fields
+  - action: click_button
+    on_error: screenshot_and_report</pre>
+      </div>
+    </section>
+
+    <div class="footer">Flow = 可参数化 + 可组合 + 可 dry-run + 可报告 + 可复用</div>
+  </main>
+</body>
+</html>

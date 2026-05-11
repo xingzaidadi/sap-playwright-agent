@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>V1 到 V3 路线图</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #c9d2e3;
+      --core: #0f766e;
+      --sap: #2563eb;
+      --v2: #b45309;
+      --v3: #7c3aed;
+      --card: #ffffff;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+    }
+    .canvas {
+      width: 1280px;
+      height: 720px;
+      padding: 48px 56px;
+      background: linear-gradient(180deg, #ffffff 0%, #f3f6fb 100%);
+      border: 1px solid #d8e0ee;
+    }
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 34px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 38px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .tag {
+      padding: 10px 16px;
+      border: 1px solid #d3dbea;
+      border-radius: 8px;
+      background: #fff;
+      color: #344054;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+    .roadmap {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+      position: relative;
+    }
+    .roadmap::before {
+      content: "";
+      position: absolute;
+      left: 110px;
+      right: 110px;
+      top: 58px;
+      height: 4px;
+      background: var(--line);
+      z-index: 0;
+    }
+    .phase {
+      position: relative;
+      z-index: 1;
+      background: var(--card);
+      border: 1px solid #d8e0ee;
+      border-radius: 8px;
+      padding: 26px 24px 24px;
+      min-height: 386px;
+      box-shadow: 0 14px 34px rgba(20, 32, 54, 0.08);
+    }
+    .dot {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 700;
+      font-size: 17px;
+      margin-bottom: 18px;
+    }
+    .phase:nth-child(1) .dot,
+    .phase:nth-child(1) .status {
+      background: var(--core);
+    }
+    .phase:nth-child(2) .dot,
+    .phase:nth-child(2) .status {
+      background: var(--v2);
+    }
+    .phase:nth-child(3) .dot,
+    .phase:nth-child(3) .status {
+      background: var(--v3);
+    }
+    h2 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .status {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .desc {
+      margin: 18px 0 18px;
+      color: #344054;
+      font-size: 17px;
+      line-height: 1.55;
+    }
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #344054;
+      font-size: 16px;
+      line-height: 1.72;
+    }
+    .footer {
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: 1.08fr 1fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .box {
+      border: 1px solid #d8e0ee;
+      border-radius: 8px;
+      background: #fff;
+      padding: 20px 22px;
+    }
+    .box-title {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .formula {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      color: #344054;
+      font-size: 16px;
+    }
+    .pill {
+      border: 1px solid #cdd6e6;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: #f9fafc;
+      white-space: nowrap;
+    }
+    .arrow {
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .note {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="canvas">
+    <header>
+      <div>
+        <h1>从 SAP 自动化到通用企业 Web 自动化框架</h1>
+        <div class="subtitle">V1 到 V3 第一轮收口完成：从采集、可信执行到第二 Adapter 验证</div>
+      </div>
+      <div class="tag">Core 不是 SAP，SAP 是第一个 Adapter 样例</div>
+    </header>
+
+    <section class="roadmap">
+      <article class="phase">
+        <div class="dot">V1</div>
+        <h2>采集与执行闭环</h2>
+        <span class="status">已完成</span>
+        <p class="desc">先做 Recording Pack，而不是完整录制回放。把 SOP、截图、selector 候选和等待证据沉淀成可 review 的自动化素材。</p>
+        <ul>
+          <li>record-flow / compile-recording</li>
+          <li>YAML Flow + FlowRunner</li>
+          <li>dry-run 与参数校验</li>
+          <li>截图证据与 HTML Report</li>
+        </ul>
+      </article>
+
+      <article class="phase">
+        <div class="dot">V2</div>
+        <h2>可信执行框架</h2>
+        <span class="status">已完成</span>
+        <p class="desc">从能跑升级到能证明、能阻断、能审计。企业后台自动化必须处理不可逆动作和系统边界。</p>
+        <ul>
+          <li>Run Context + Step Evidence</li>
+          <li>不可逆动作 Approval Gate</li>
+          <li>只读 Flow 与变更 Flow 分离</li>
+          <li>SAP Adapter 不污染 Core</li>
+        </ul>
+      </article>
+
+      <article class="phase">
+        <div class="dot">V3</div>
+        <h2>多系统半自主</h2>
+        <span class="status">第一轮完成</span>
+        <p class="desc">不是继续堆 SAP Flow，而是用 SRM 作为第二 Adapter，证明同一套 Core 可以迁移到更多企业 Web 系统。</p>
+        <ul>
+          <li>Action Registry</li>
+          <li>Adapter Registry</li>
+          <li>SRM query / create / confirm / generate</li>
+          <li>uploadPOScan 单独审查</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="footer">
+      <div class="box">
+        <p class="box-title">框架公式</p>
+        <div class="formula">
+          <span class="pill">Recording Pack</span>
+          <span class="arrow">→</span>
+          <span class="pill">Flow Engine</span>
+          <span class="arrow">→</span>
+          <span class="pill">Action Registry</span>
+          <span class="arrow">→</span>
+          <span class="pill">Adapter</span>
+          <span class="arrow">→</span>
+          <span class="pill">Evidence + Approval</span>
+        </div>
+      </div>
+      <div class="box">
+        <p class="box-title">判断标准</p>
+        <p class="note">不要用业务 Flow 数量判断成熟度。真正的成熟度来自框架机制是否能迁移到第二个系统。</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

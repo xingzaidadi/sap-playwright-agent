@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>AI 在框架中的角色边界</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #5f6b7a;
+      --line: #cfd8e3;
+      --bg: #f6f8fb;
+      --ai: #276749;
+      --ai-bg: #e8fef3;
+      --det: #1f7a8c;
+      --det-bg: #e8f4f8;
+      --danger: #c0392b;
+      --danger-bg: #fde8e8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .frame {
+      width: 1200px;
+      height: 675px;
+      padding: 44px 56px;
+      background: linear-gradient(180deg, #ffffff 0%, #f2f6fa 100%);
+    }
+    h1 { margin: 0; font-size: 32px; }
+    .subtitle { margin-top: 8px; color: var(--muted); font-size: 17px; }
+
+    .zones {
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .zone {
+      border-radius: 12px;
+      padding: 28px;
+      min-height: 240px;
+    }
+    .zone.ai-zone { background: var(--ai-bg); border: 2px solid var(--ai); }
+    .zone.det-zone { background: var(--det-bg); border: 2px solid var(--det); }
+    .zone h2 { margin: 0 0 6px; font-size: 22px; }
+    .zone.ai-zone h2 { color: var(--ai); }
+    .zone.det-zone h2 { color: var(--det); }
+    .zone .desc { color: var(--muted); font-size: 15px; margin-bottom: 18px; }
+    .zone ul {
+      margin: 0; padding: 0; list-style: none;
+    }
+    .zone li {
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      background: #fff;
+      border-radius: 6px;
+      font-size: 16px;
+      line-height: 1.4;
+      border: 1px solid var(--line);
+    }
+    .zone li strong { display: block; font-size: 15px; margin-bottom: 2px; }
+
+    .boundary {
+      margin-top: 24px;
+      border-radius: 10px;
+      background: var(--danger-bg);
+      border: 2px solid var(--danger);
+      padding: 20px 28px;
+    }
+    .boundary h3 { margin: 0 0 12px; font-size: 19px; color: var(--danger); }
+    .boundary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .boundary-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <h1>AI 在通用自动化框架里的正确位置</h1>
+    <div class="subtitle">AI 负责理解和建议，Flow / Adapter / Runtime 负责执行</div>
+
+    <section class="zones">
+      <div class="zone ai-zone">
+        <h2>AI 做什么</h2>
+        <div class="desc">理解、判断、生成、解释</div>
+        <ul>
+          <li><strong>意图解析</strong>"帮我查 PO" &rarr; Flow + params</li>
+          <li><strong>异常诊断</strong>截图 + a11y tree + 错误日志 &rarr; 原因分析</li>
+          <li><strong>开发辅助</strong>从录制素材生成 Flow / Adapter 草稿</li>
+          <li><strong>交互追问</strong>参数缺失时向用户补问</li>
+        </ul>
+      </div>
+
+      <div class="zone det-zone">
+        <h2>确定性代码做什么</h2>
+        <div class="desc">编排、执行、记录、校验</div>
+        <ul>
+          <li><strong>Flow Engine</strong>步骤编排、条件分支、on_error</li>
+          <li><strong>Action Registry</strong>路由 action &rarr; adapter method</li>
+          <li><strong>Adapter + Page Object</strong>页面操作、系统差异隔离</li>
+          <li><strong>Report / Trace</strong>截图、步骤日志、HTML 报告</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="boundary">
+      <h3>AI 不能绕过的边界</h3>
+      <div class="boundary-grid">
+        <div class="boundary-item">Flow Contract</div>
+        <div class="boundary-item">Approval Gate</div>
+        <div class="boundary-item">Promotion Gate</div>
+        <div class="boundary-item">Evidence Report</div>
+      </div>
+    </section>
+
+    <div class="footer">半自主 = AI 参与采集、编译、诊断、解释 &middot; 确定性代码负责执行 &middot; 审批和证据负责兜底</div>
+  </main>
+</body>
+</html>

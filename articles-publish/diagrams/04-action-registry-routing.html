@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Action Registry 路由设计</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #5f6b7a;
+      --line: #cfd8e3;
+      --bg: #f6f8fb;
+      --flow: #1f7a8c;
+      --registry: #b45f06;
+      --adapter: #7b3f98;
+      --page: #276749;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .frame {
+      width: 1200px;
+      height: 675px;
+      padding: 44px 56px;
+      background: linear-gradient(180deg, #ffffff 0%, #f2f6fa 100%);
+      display: flex;
+      flex-direction: column;
+    }
+    h1 { margin: 0; font-size: 32px; }
+    .subtitle { margin-top: 8px; color: var(--muted); font-size: 17px; }
+
+    .diagram {
+      flex: 1;
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: 200px 60px 240px 60px 240px 60px 200px;
+      align-items: center;
+      justify-items: center;
+    }
+    .box {
+      width: 100%;
+      border-radius: 10px;
+      padding: 20px 16px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .box h3 { margin: 0 0 8px; font-size: 17px; }
+    .box p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .box.flow-box { background: #e8f4f8; border: 2px solid var(--flow); }
+    .box.flow-box h3 { color: var(--flow); }
+    .box.reg-box { background: #fef3e8; border: 2px solid var(--registry); }
+    .box.reg-box h3 { color: var(--registry); }
+    .box.adapter-box { background: #f3e8fe; border: 2px solid var(--adapter); }
+    .box.adapter-box h3 { color: var(--adapter); }
+    .box.page-box { background: #e8fef3; border: 2px solid var(--page); }
+    .box.page-box h3 { color: var(--page); }
+
+    .arrow { font-size: 28px; color: var(--muted); font-weight: bold; }
+
+    .examples {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .example {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .example .label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .example code {
+      display: block;
+      font-size: 15px;
+      font-family: "Cascadia Code", "Fira Code", monospace;
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    .footer {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <h1>Action Registry：Flow 如何找到 Adapter</h1>
+    <div class="subtitle">Flow 只写业务动作名，不关心哪个系统、哪个页面、怎么点</div>
+
+    <section class="diagram">
+      <div class="box flow-box">
+        <h3>Flow</h3>
+        <p>YAML 步骤<br><code>action: srm_generate_invoice</code></p>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box reg-box">
+        <h3>Action Registry</h3>
+        <p>action name<br>&darr;<br>adapter + method<br>+ risk + approval</p>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box adapter-box">
+        <h3>Adapter</h3>
+        <p>SAPAdapter<br>SRMAdapter<br>OAAdapter</p>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="box page-box">
+        <h3>Page Object</h3>
+        <p>ME23NPage<br>SRMInvoicePage<br>OAApprovalPage</p>
+      </div>
+    </section>
+
+    <section class="examples">
+      <div class="example">
+        <div class="label">Flow 里写</div>
+        <code>action: srm_generate_invoice<br>params:<br>  settlement_id: "123"</code>
+      </div>
+      <div class="example">
+        <div class="label">Registry 知道</div>
+        <code>adapter: srm<br>method: generateInvoice<br>risk: irreversible<br>approval: true</code>
+      </div>
+      <div class="example">
+        <div class="label">Adapter 执行</div>
+        <code>SRMAdapter<br>  .generateInvoice({<br>    settlement_id: "123"<br>  })</code>
+      </div>
+    </section>
+
+    <div class="footer">Flow 不知道页面怎么点 &middot; Registry 不执行动作 &middot; Adapter 不编排流程</div>
+  </main>
+</body>
+</html>

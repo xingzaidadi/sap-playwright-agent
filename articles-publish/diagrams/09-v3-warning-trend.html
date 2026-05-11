@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>V3 SRM 收口：Flow Scanner Warning 变化</title>
+  <style>
+    :root {
+      --ink: #172026;
+      --muted: #5a6872;
+      --line: #d6dde2;
+      --panel: #ffffff;
+      --bg: #f3f6f8;
+      --blue: #2266aa;
+      --teal: #13806f;
+      --red: #bf4b45;
+      --yellow: #c78b16;
+      --green: #2f7d32;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", Arial, sans-serif;
+    }
+
+    .canvas {
+      width: 1200px;
+      height: 675px;
+      padding: 46px 58px;
+      background: #f8fafb;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 28px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 32px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.18;
+      letter-spacing: 0;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.5;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      display: grid;
+      gap: 7px;
+      min-width: 210px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .badge strong {
+      font-size: 28px;
+      line-height: 1;
+      color: var(--green);
+    }
+
+    .badge span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 30px;
+      align-items: stretch;
+    }
+
+    .chart,
+    .notes {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: 24px;
+    }
+
+    .chart-title,
+    .notes-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+
+    .bars {
+      display: grid;
+      gap: 18px;
+      margin-top: 10px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 154px 1fr 54px;
+      align-items: center;
+      gap: 16px;
+      min-height: 46px;
+    }
+
+    .label {
+      font-size: 15px;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .bar-track {
+      height: 30px;
+      border: 1px solid #d9e0e5;
+      background: #eef3f5;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bar {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .b60 { width: 100%; background: var(--red); }
+    .b55 { width: 91.7%; background: var(--yellow); }
+    .b46 { width: 76.7%; background: var(--teal); }
+    .b39 { width: 65%; background: var(--blue); }
+    .b35 { width: 58.3%; background: var(--green); }
+
+    .value {
+      font-size: 22px;
+      font-weight: 750;
+      text-align: right;
+    }
+
+    .milestones {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+    }
+
+    .milestone {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 12px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .milestone code {
+      color: var(--blue);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+    }
+
+    .notes ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 16px;
+    }
+
+    .notes li {
+      border-left: 4px solid var(--blue);
+      padding-left: 14px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .notes strong {
+      color: var(--ink);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid var(--line);
+      padding-top: 18px;
+    }
+
+    .footer-strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="canvas">
+    <header>
+      <div>
+        <h1>V3 SRM 收口：旧页面级 Flow 正在退出主线</h1>
+        <div class="subtitle">Flow Scanner warning 从 60 降到 35，核心变化不是隐藏问题，而是用业务级 Action + Adapter capability 替换旧页面动作。</div>
+      </div>
+      <div class="badge">
+        <strong>0 errors</strong>
+        <span>19 个 Flow 静态扫描通过，剩余 warning 进入分级清理。</span>
+      </div>
+    </header>
+
+    <section class="main">
+      <section class="chart">
+        <div class="chart-title">Warning 数量变化</div>
+        <div class="bars">
+          <div class="row">
+            <div class="label">V3 收口前</div>
+            <div class="bar-track"><div class="bar b60">旧 SRM/ECC 草稿集中暴露</div></div>
+            <div class="value">60</div>
+          </div>
+          <div class="row">
+            <div class="label">confirm 收口后</div>
+            <div class="bar-track"><div class="bar b55">confirm 变成业务级 Flow</div></div>
+            <div class="value">55</div>
+          </div>
+          <div class="row">
+            <div class="label">generate 收口后</div>
+            <div class="bar-track"><div class="bar b46">generate 拆出独立能力</div></div>
+            <div class="value">46</div>
+          </div>
+          <div class="row">
+            <div class="label">create 收口后</div>
+            <div class="bar-track"><div class="bar b39">create 变成业务级 Flow</div></div>
+            <div class="value">39</div>
+          </div>
+          <div class="row">
+            <div class="label">scanner 收口后</div>
+            <div class="bar-track"><div class="bar b35">mixed adapter 正确归属</div></div>
+            <div class="value">35</div>
+          </div>
+        </div>
+
+        <div class="milestones">
+          <div class="milestone">
+            <code>094789c</code>
+            <span>新增 `srm_confirm_settlement` production skeleton，保留 approval gate。</span>
+          </div>
+          <div class="milestone">
+            <code>3f8d8d3</code>
+            <span>新增 `srm_generate_invoice` production skeleton，不再顺手确认 settlement。</span>
+          </div>
+          <div class="milestone">
+            <code>V3.1</code>
+            <span>收口 `srm_create_settlement` Flow，query / create / confirm / generate 主线全部业务级化。</span>
+          </div>
+          <div class="milestone">
+            <code>V4 pre</code>
+            <span>阻断 legacy `confirmAndGenerateInvoice`，并让 scanner 正确识别 mixed ECC/SRM Flow。</span>
+          </div>
+          <div class="milestone">
+            <code>017deb6</code>
+            <span>uploadPOScan 独立成 `srm_upload_po_scan`，19 个 Flow 保持 0 errors / 35 warnings。</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="notes">
+        <div class="notes-title">文章里要讲清楚的三点</div>
+        <ul>
+          <li>
+            <strong>业务边界比 selector 更危险</strong>
+            selector 不稳通常只是失败，业务边界不清会把确认、生成发票、提交审批混成一个动作。
+          </li>
+          <li>
+            <strong>implemented 不等于真实生产运行</strong>
+            这里表示生产骨架和静态验证闭环完成，真实 SRM 环境仍需人工审批和验证。
+          </li>
+          <li>
+            <strong>SAP 是样例，框架才是主角</strong>
+            同一套 Core 已经从 SAP ECC 迁移到 SRM，变化的是 Adapter 和 Page Object。
+          </li>
+        </ul>
+      </section>
+    </section>
+
+    <footer>
+      <span><span class="footer-strong">Core 链路：</span> Recording Pack -> Flow -> Action -> Adapter -> Page Object -> Evidence -> Approval Gate</span>
+      <span>建议截图尺寸：1200 x 675</span>
+    </footer>
+  </main>
+</body>
+</html>
