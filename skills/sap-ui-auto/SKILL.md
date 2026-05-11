@@ -1,6 +1,6 @@
 ---
 name: web-ui-auto
-version: "3.9"
+version: "3.10"
 description: Use this skill when the user asks to automate enterprise Web UI work, run or design business Flows, operate SAP/OA/CRM/SRM pages, generate automation from SOP/screenshots/recordings, fix Playwright automation, or evolve the sap-playwright-agent framework. Prefer Recording Pack + Flow Engine + Adapter over one-off scripts. Irreversible business actions must use an approval gate.
 tools: [bash]
 domains: [generic-web, sap-ecc, sap-srm, oa, crm]
@@ -35,6 +35,7 @@ changelog:
   "3.7": `recordings/srm-create-settlement` now uses explicit business params instead of generic `input`; generated drafts align with `srm_create_settlement` action params.
   "3.8": `confirmSettlement` now has an approval-gated production skeleton with Flow, Action, Adapter method, Page Object, explicit `settlement_id` param, and scanner alignment.
   "3.9": `generateInvoice` now has an approval-gated production skeleton with Flow, Action, Adapter method, Page Object, explicit invoice date params, and scanner alignment.
+  "3.10": `uploadPOScan` now uses the independent `srm_upload_po_scan` action with explicit `file_path`, sensitive-content review, approval gating, and legacy `srm_operation.uploadPOScan` blocking.
 ---
 
 # Web UI Automation Skill
@@ -109,6 +110,11 @@ V3 started:
   `flows/srm-query-settlement-status.yaml` is the first SRM read-only production
   skeleton. It calls `srm_query_settlement_status`, maps to
   `SapSrmAdapter.srmQuerySettlementStatus`, and must remain read-only.
+  `flows/srm-upload-po-scan.yaml` is an approval-gated reversible-change
+  production skeleton. It calls `srm_upload_po_scan`, maps to
+  `SapSrmAdapter.uploadPOScan`, requires explicit `file_path` and
+  `sensitive_content_reviewed=true`, and must not use the legacy
+  `srm_operation.uploadPOScan` wrapper.
 ```
 
 Current framing:

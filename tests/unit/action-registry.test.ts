@@ -1,5 +1,23 @@
-import { describe, expect, it } from 'vitest'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, describe, expect, it } from 'vitest'
 import { ActionRegistry, createDefaultActionRegistry } from '../../src/engine/actions/index.js'
+
+const tempRoots: string[] = []
+
+function makeTempRoot(): string {
+  const dir = mkdtempSync(join(tmpdir(), 'action-registry-'))
+  tempRoots.push(dir)
+  return dir
+}
+
+afterEach(() => {
+  while (tempRoots.length > 0) {
+    const dir = tempRoots.pop()
+    if (dir) rmSync(dir, { recursive: true, force: true })
+  }
+})
 
 describe('ActionRegistry', () => {
   it('registers the default core, SAP, and integration actions', () => {
@@ -22,6 +40,7 @@ describe('ActionRegistry', () => {
       'srm_generate_invoice',
       'srm_operation',
       'srm_query_settlement_status',
+      'srm_upload_po_scan',
       'wait',
     ])
   })
@@ -162,6 +181,134 @@ describe('ActionRegistry', () => {
       yearMonth: '202605',
       externalAgent: 'AGENT',
     })
+  })
+
+  it('maps srm_upload_po_scan to the SRM adapter uploadPOScan method after preflight checks', async () => {
+    const registry = createDefaultActionRegistry()
+    const tempRoot = makeTempRoot()
+    const filePath = join(tempRoot, 'po-scan.pdf')
+    writeFileSync(filePath, 'reviewed test attachment', 'utf-8')
+    const uploadPOScan = async (params: unknown) => params
+
+    const result = await registry.get('srm_upload_po_scan')?.execute({
+      page: {} as never,
+      step: { id: 'upload', action: 'srm_upload_po_scan' },
+      resolvedParams: {
+        vendor: 'VENDOR',
+        po_number: '4500000001',
+        file_path: filePath,
+        sensitive_content_reviewed: true,
+      },
+      runContext: null,
+      params: {},
+      outputs: {},
+      getAdapter: () => ({ uploadPOScan }),
+      evaluateCondition: () => true,
+      runSubFlow: async () => ({
+        flowName: 'noop',
+        success: true,
+        outputs: {},
+        steps: [],
+        screenshots: [],
+        duration: 0,
+      }),
+    })
+
+    expect(result).toEqual({
+      vendor: 'VENDOR',
+      poNumber: '4500000001',
+      filePath,
+    })
+  })
+
+  it('requires sensitive content review before srm_upload_po_scan', async () => {
+    const registry = createDefaultActionRegistry()
+    const tempRoot = makeTempRoot()
+    const filePath = join(tempRoot, 'po-scan.pdf')
+    writeFileSync(filePath, 'reviewed test attachment', 'utf-8')
+
+    await expect(registry.get('srm_upload_po_scan')?.execute({
+      page: {} as never,
+      step: { id: 'upload', action: 'srm_upload_po_scan' },
+      resolvedParams: {
+        vendor: 'VENDOR',
+        po_number: '4500000001',
+        file_path: filePath,
+        sensitive_content_reviewed: false,
+      },
+      runContext: null,
+      params: {},
+      outputs: {},
+      getAdapter: () => ({
+        uploadPOScan: async () => ({}),
+      }),
+      evaluateCondition: () => true,
+      runSubFlow: async () => ({
+        flowName: 'noop',
+        success: true,
+        outputs: {},
+        steps: [],
+        screenshots: [],
+        duration: 0,
+      }),
+    })).rejects.toThrow('sensitive_content_reviewed=true')
+  })
+
+  it('blocks the retired uploadPOScan SRM operation wrapper', async () => {
+    const registry = createDefaultActionRegistry()
+
+    await expect(registry.get('srm_operation')?.execute({
+      page: {} as never,
+      step: { id: 'legacy-upload', action: 'srm_operation' },
+      resolvedParams: {
+        operation: 'uploadPOScan',
+        vendor: 'VENDOR',
+        po_number: '4500000001',
+      },
+      runContext: null,
+      params: {},
+      outputs: {},
+      getAdapter: () => ({
+        uploadPOScan: async () => ({}),
+      }),
+      evaluateCondition: () => true,
+      runSubFlow: async () => ({
+        flowName: 'noop',
+        success: true,
+        outputs: {},
+        steps: [],
+        screenshots: [],
+        duration: 0,
+      }),
+    })).rejects.toThrow('SRM operation "uploadPOScan" is retired')
+  })
+
+  it('blocks the retired confirmAndGenerateInvoice SRM operation', async () => {
+    const registry = createDefaultActionRegistry()
+
+    await expect(registry.get('srm_operation')?.execute({
+      page: {} as never,
+      step: { id: 'legacy', action: 'srm_operation' },
+      resolvedParams: {
+        operation: 'confirmAndGenerateInvoice',
+        settlement_number: '9600000001',
+      },
+      runContext: null,
+      params: {},
+      outputs: {},
+      getAdapter: () => ({
+        confirmAndGenerateInvoice: async () => ({}),
+      }),
+      evaluateCondition: () => true,
+      runSubFlow: async () => ({
+        flowName: 'noop',
+        success: true,
+        outputs: {},
+        steps: [],
+        screenshots: [],
+        duration: 0,
+      }),
+    })).rejects.toThrow('SRM operation "confirmAndGenerateInvoice" is retired')
   })
 
   it('rejects duplicate action names', () => {

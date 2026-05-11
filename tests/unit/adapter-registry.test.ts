@@ -25,11 +25,25 @@ describe('AdapterRegistry', () => {
     expect(srmCapabilities.map(capability => capability.name)).toEqual([
       'srmQuerySettlementStatus',
       'uploadPOScan',
+      'uploadPOScanLegacyOperation',
       'createSettlement',
       'confirmAndGenerateInvoice',
       'confirmSettlement',
       'generateInvoice',
     ])
+    expect(registry.getCapability('sap-srm', 'uploadPOScan')).toMatchObject({
+      action: 'srm_upload_po_scan',
+      risk: 'reversible_change',
+      status: 'implemented',
+      requiresHumanApproval: true,
+    })
+    expect(registry.getCapability('sap-srm', 'uploadPOScanLegacyOperation')).toMatchObject({
+      action: 'srm_operation',
+      method: 'uploadPOScan',
+      risk: 'reversible_change',
+      status: 'blocked',
+      requiresHumanApproval: true,
+    })
     expect(registry.getCapability('sap-srm', 'srmQuerySettlementStatus')).toMatchObject({
       action: 'srm_query_settlement_status',
       risk: 'read_only',
@@ -38,8 +52,9 @@ describe('AdapterRegistry', () => {
     })
     expect(registry.getCapability('sap-srm', 'confirmAndGenerateInvoice')).toMatchObject({
       risk: 'irreversible',
-      status: 'implemented',
+      status: 'blocked',
       requiresHumanApproval: true,
+      notes: 'Retired legacy compatibility capability. New Flows must use confirmSettlement and generateInvoice as separate approval-gated capabilities.',
     })
     expect(registry.getCapability('sap-srm', 'confirmSettlement')).toMatchObject({
       action: 'srm_confirm_settlement',

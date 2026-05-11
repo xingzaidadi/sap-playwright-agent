@@ -135,6 +135,66 @@ describe('flow-capabilities', () => {
     })
   })
 
+  it('passes approval-gated SRM PO scan upload capability', () => {
+    const result = validateFlowCapabilities({
+      name: 'srm-upload-po-scan',
+      description: 'Upload a reviewed PO scan attachment.',
+      metadata: {
+        schema_version: 'flow-v1',
+        adapter: 'sap-srm',
+        risk: 'reversible_change',
+      },
+      params: [],
+      steps: [
+        {
+          id: 'upload',
+          action: 'srm_upload_po_scan',
+          requires_approval: true,
+          approval_reason: 'Uploads supplier attachment content to SRM.',
+          params: {
+            vendor: '{{vendor}}',
+            po_number: '{{po_number}}',
+            file_path: '{{file_path}}',
+            sensitive_content_reviewed: '{{sensitive_content_reviewed}}',
+          },
+        },
+      ],
+    })
+
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+    expect(result.warnings).toHaveLength(0)
+    expect(result.steps[0]).toMatchObject({
+      status: 'matched',
+      capability: 'uploadPOScan',
+    })
+  })
+
+  it('blocks the legacy srm_operation uploadPOScan capability', () => {
+    const result = validateFlowCapabilities({
+      name: 'legacy-srm-upload',
+      description: 'Legacy upload operation wrapper.',
+      metadata: {
+        schema_version: 'flow-v1',
+        adapter: 'sap-srm',
+        risk: 'reversible_change',
+      },
+      params: [],
+      steps: [
+        {
+          id: 'upload',
+          action: 'srm_operation',
+          requires_approval: true,
+          approval_reason: 'Uploads supplier attachment content to SRM.',
+          params: { operation: 'uploadPOScan' },
+        },
+      ],
+    })
+
+    expect(result.valid).toBe(false)
+    expect(result.errors.map(error => error.message)).toContain('Capability "uploadPOScanLegacyOperation" is blocked.')
+  })
+
   it('fails irreversible SRM split capabilities without approval', () => {
     const result = validateFlowCapabilities({
       name: 'srm-generate-invoice',
@@ -155,6 +215,65 @@ describe('flow-capabilities', () => {
 
     expect(result.valid).toBe(false)
     expect(result.errors.map(error => error.path)).toContain('steps[0].requires_approval')
+  })
+
+  it('infers step adapters for mixed ECC and SRM flows', () => {
+    const result = validateFlowCapabilities({
+      name: 'full-procurement-settlement',
+      description: 'Mixed ECC and SRM procurement settlement flow.',
+      metadata: {
+        schema_version: 'flow-v1',
+        adapters: ['sap-ecc', 'sap-srm'],
+        risk: 'irreversible',
+      },
+      params: [],
+      steps: [
+        {
+          id: 'create_settlement',
+          action: 'srm_create_settlement',
+          requires_approval: true,
+          approval_reason: 'Creates an SRM settlement document.',
+        },
+        {
+          id: 'generate_invoice',
+          action: 'srm_generate_invoice',
+          requires_approval: true,
+          approval_reason: 'Generates an SAP estimated invoice.',
+        },
+        {
+          id: 'capture_final',
+          action: 'extract_text',
+          params: { element: 'status_bar' },
+        },
+      ],
+    })
+
+    expect(result.valid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+    expect(result.warnings).toHaveLength(0)
+    expect(result.steps).toEqual([
+      {
+        stepId: 'create_settlement',
+        action: 'srm_create_settlement',
+        adapter: 'sap-srm',
+        capability: 'createSettlement',
+        status: 'matched',
+      },
+      {
+        stepId: 'generate_invoice',
+        action: 'srm_generate_invoice',
+        adapter: 'sap-srm',
+        capability: 'generateInvoice',
+        status: 'matched',
+      },
+      {
+        stepId: 'capture_final',
+        action: 'extract_text',
+        adapter: 'sap-ecc',
+        capability: 'extractText',
+        status: 'matched',
+      },
+    ])
   })
 
   it('scans a directory of Flow files', () => {

@@ -105,6 +105,7 @@ describe('flow-loader', () => {
         'release-po',
         'srm-create-settlement',
         'srm-generate-invoice',
+        'srm-upload-po-scan',
         'verify-invoice',
         'view-goods-receipt',
       ]
@@ -132,6 +133,30 @@ describe('flow-loader', () => {
 
       expect(result.valid).toBe(false)
       expect(result.errors.map(error => error.path)).toContain('steps')
+    })
+
+    it('allows approval gates on reversible-change flows', () => {
+      const result = validateFlowContract({
+        name: 'srm-upload-po-scan',
+        description: 'Upload reviewed attachment.',
+        metadata: {
+          schema_version: 'flow-v1',
+          adapter: 'sap-srm',
+          risk: 'reversible_change',
+        },
+        params: [],
+        steps: [
+          {
+            id: 'upload',
+            action: 'srm_upload_po_scan',
+            requires_approval: true,
+            approval_reason: 'Uploads supplier attachment content.',
+          },
+        ],
+      })
+
+      expect(result.valid).toBe(true)
+      expect(result.warnings.map(warning => warning.path)).not.toContain('metadata.risk')
     })
 
     it('should warn when flows expose page details', () => {

@@ -1,0 +1,37 @@
+name: srm-upload-po-scan
+metadata:
+  schema_version: flow-v1
+  adapter: sap-srm
+  risk: reversible_change
+description: Upload a reviewed PO scan attachment to SRM.
+
+params:
+  - name: vendor
+    type: string
+    required: true
+    description: Supplier/vendor id.
+  - name: po_number
+    type: string
+    required: true
+    description: Purchase order number whose scan attachment will be uploaded.
+  - name: file_path
+    type: string
+    required: true
+    description: Local PDF/image file path reviewed for upload.
+  - name: sensitive_content_reviewed
+    type: boolean
+    required: true
+    description: Must be true only after supplier/private content and upload scope are reviewed.
+
+steps:
+  - id: upload_po_scan
+    action: srm_upload_po_scan
+    requires_approval: true
+    approval_reason: Uploading PO scan files changes SRM attachment state and may expose supplier-sensitive content.
+    params:
+      vendor: "{{vendor}}"
+      po_number: "{{po_number}}"
+      file_path: "{{file_path}}"
+      sensitive_content_reviewed: "{{sensitive_content_reviewed}}"
+    output: po_scan_upload_result
+    on_error: screenshot_and_report

@@ -66,6 +66,25 @@ describe('adapter capability catalog', () => {
     expect(irreversibleCapabilities.every(capability => capability.requiresHumanApproval)).toBe(true)
   })
 
+  it('requires approval and explicit action routing for SRM PO scan uploads', () => {
+    const registry = createDefaultAdapterRegistry()
+
+    expect(registry.getCapability(SAP_SRM_ADAPTER, 'uploadPOScan')).toMatchObject({
+      action: 'srm_upload_po_scan',
+      method: 'uploadPOScan',
+      risk: 'reversible_change',
+      status: 'implemented',
+      requiresHumanApproval: true,
+    })
+    expect(registry.getCapability(SAP_SRM_ADAPTER, 'uploadPOScanLegacyOperation')).toMatchObject({
+      action: 'srm_operation',
+      method: 'uploadPOScan',
+      risk: 'reversible_change',
+      status: 'blocked',
+      requiresHumanApproval: true,
+    })
+  })
+
   it('has no remaining draft SRM capabilities after invoice split skeletons are implemented', () => {
     const registry = createDefaultAdapterRegistry()
     const draftCapabilities = registry
@@ -73,6 +92,18 @@ describe('adapter capability catalog', () => {
       .filter((capability: AdapterCapability) => capability.status === 'draft')
 
     expect(draftCapabilities).toHaveLength(0)
+  })
+
+  it('blocks the retired confirmAndGenerateInvoice combined capability', () => {
+    const registry = createDefaultAdapterRegistry()
+
+    expect(registry.getCapability(SAP_SRM_ADAPTER, 'confirmAndGenerateInvoice')).toMatchObject({
+      action: 'srm_operation',
+      method: 'confirmAndGenerateInvoice',
+      status: 'blocked',
+      risk: 'irreversible',
+      requiresHumanApproval: true,
+    })
   })
 
   it('tracks invoice split capability maturity separately', () => {

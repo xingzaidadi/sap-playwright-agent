@@ -7,7 +7,7 @@ import {
   createDefaultAdapterRegistry,
   type AdapterCapability,
 } from './adapters/index.js'
-import type { FlowDefinition, FlowRiskLevel, FlowStep } from './types.js'
+import type { FlowDefinition, FlowMetadata, FlowRiskLevel, FlowStep } from './types.js'
 
 export type FlowCapabilityIssueLevel = 'error' | 'warning'
 
@@ -60,11 +60,11 @@ export function validateFlowCapabilities(flow: FlowDefinition): FlowCapabilityVa
     issues.push({ level, path, message })
   }
 
-  const adapterName = flow.metadata?.adapter
   const flowRisk = flow.metadata?.risk
 
   flow.steps?.forEach((step, index) => {
     const path = `steps[${index}]`
+    const adapterName = resolveStepAdapter(flow.metadata, step)
     const stepCheck = validateStepCapability(step, path, adapterName, flowRisk, addIssue)
     steps.push(stepCheck)
   })
@@ -77,6 +77,30 @@ export function validateFlowCapabilities(flow: FlowDefinition): FlowCapabilityVa
     warnings,
     steps,
   }
+}
+
+function resolveStepAdapter(metadata: FlowMetadata | undefined, step: FlowStep): string | undefined {
+  if (metadata?.adapter) {
+    return metadata.adapter
+  }
+
+  const adapters = metadata?.adapters ?? []
+  if (adapters.includes(SAP_SRM_ADAPTER) && (step.action === 'srm_operation' || step.action.startsWith('srm_'))) {
+    return SAP_SRM_ADAPTER
+  }
+
+  if (adapters.includes(SAP_ECC_ADAPTER) && isSapEccAction(step.action)) {
+    return SAP_ECC_ADAPTER
+  }
+
+  return undefined
+}
+
+function isSapEccAction(action: string): boolean {
+  return action === 'navigate_tcode'
+    || action === 'fill_fields'
+    || action === 'click_button'
+    || action === 'extract_text'
 }
 
 export function scanFlowCapabilities(flowsDirInput: string): FlowCapabilityScanItem[] {
@@ -159,7 +183,9 @@ function findStepCapability(
 ): AdapterCapability | undefined {
   if (adapterName === SAP_SRM_ADAPTER && step.action === 'srm_operation') {
     const operation = String(step.params?.operation ?? '')
-    return capabilities.find(capability => capability.method === operation || capability.name === operation)
+    return capabilities.find(capability =>
+      capability.action === 'srm_operation' && (capability.method === operation || capability.name === operation)
+    ) ?? capabilities.find(capability => capability.method === operation || capability.name === operation)
   }
 
   if (adapterName === SAP_ECC_ADAPTER) {

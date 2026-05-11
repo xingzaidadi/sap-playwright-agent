@@ -5,27 +5,17 @@ metadata:
     - sap-ecc
     - sap-srm
   risk: irreversible
-description: 完整采购→结算全流程（参考 流程.docx）
-
-# 流程概览（参考截图 image_24）:
-# 供应商侧: 1.创建结算对账单 → 3.维护结算对账单-匹配发票
-# 小米财务侧: 2.管理对账单-生成SAP暂估发票&对账单确认 → 4.发票审核与同步&发票确认
-#
-# 前置条件（SAP GUI）:
-# ME21N 创建PO → ME22 更改PO → ME29N 释放PO → MIGO 收货(101) → (可选) MIGO 退货(Y23)
-#
-# 结算流程（SRM Web）:
-# 上传PO扫描件 → 创建对账单 → 对账单确认 → 生成SAP暂估发票
+description: End-to-end procurement settlement flow across SAP ECC and SRM.
 
 params:
   - name: po_number
     type: string
     required: true
-    description: 采购订单号（如已有PO则直接用；无PO则先创建）
+    description: Existing or created purchase order number.
   - name: vendor
     type: string
     required: true
-    description: 供应商编号
+    description: Supplier/vendor id.
   - name: company_code
     type: string
     default: "1110"
@@ -34,10 +24,10 @@ params:
     default: "1110"
   - name: material
     type: string
-    description: 物料编号（创建PO时需要）
+    description: Material number for PO creation.
   - name: quantity
     type: number
-    description: 采购数量（创建PO时需要）
+    description: PO quantity for PO creation.
   - name: plant
     type: string
     default: "1112"
@@ -50,25 +40,44 @@ params:
   - name: year_month
     type: string
     required: true
-    description: 结算年度月份（如 202509）
+    description: Settlement year and month, for example 202509.
+  - name: invoice_date
+    type: string
+    required: true
+    description: Business-approved invoice date, for example YYYY.MM.DD.
+  - name: posting_date
+    type: string
+    required: true
+    description: Business-approved posting date, for example YYYY.MM.DD.
+  - name: base_date
+    type: string
+    required: true
+    description: Business-approved baseline date, for example YYYY.MM.DD.
+  - name: po_scan_file_path
+    type: string
+    required: true
+    description: Reviewed local PDF/image file for SRM PO scan upload.
+  - name: po_scan_sensitive_content_reviewed
+    type: boolean
+    required: true
+    description: Must be true only after supplier/private content and upload scope are reviewed.
   - name: skip_po_creation
     type: boolean
     default: true
-    description: 是否跳过PO创建（用已有PO）
+    description: Skip PO creation when using an existing PO.
   - name: skip_receipt
     type: boolean
     default: true
-    description: 是否跳过收货（已收过货）
+    description: Skip goods receipt when the PO has already been received.
   - name: include_return
     type: boolean
     default: false
-    description: 是否包含退货步骤
+    description: Include optional goods return.
   - name: return_quantity
     type: number
-    description: 退货数量
+    description: Optional return quantity.
 
 steps:
-  # ===== Phase 1: SAP GUI - 采购订单 =====
   - id: create_po
     action: run_sub_flow
     requires_approval: true
@@ -95,7 +104,6 @@ steps:
         po_number: "{{po_number}}"
     on_error: screenshot_and_report
 
-  # ===== Phase 2: SAP GUI - 收货 =====
   - id: goods_receipt
     action: run_sub_flow
     params:
@@ -106,7 +114,6 @@ steps:
     output: material_document
     on_error: screenshot_and_report
 
-  # ===== Phase 3: SAP GUI - 退货（可选）=====
   - id: goods_return
     action: run_sub_flow
     params:
@@ -118,7 +125,6 @@ steps:
     output: return_document
     on_error: screenshot_and_report
 
-  # ===== Phase 4: API 数据准备 =====
   - id: query_po_details
     action: api_call
     params:
@@ -136,19 +142,22 @@ steps:
         vendor_id: "{{vendor}}"
     on_error: screenshot_and_report
 
-  # ===== Phase 5: SRM Web - 结算 =====
   - id: upload_po_scan
-    action: srm_operation
+    action: srm_upload_po_scan
+    requires_approval: true
+    approval_reason: Uploading PO scan files changes SRM attachment state and may expose supplier-sensitive content.
     params:
-      operation: uploadPOScan
       vendor: "{{vendor}}"
       po_number: "{{po_number}}"
+      file_path: "{{po_scan_file_path}}"
+      sensitive_content_reviewed: "{{po_scan_sensitive_content_reviewed}}"
     on_error: screenshot_and_report
 
   - id: create_settlement
-    action: srm_operation
+    action: srm_create_settlement
+    requires_approval: true
+    approval_reason: Creating an SRM settlement document changes business state and must be reviewed before execution.
     params:
-      operation: createSettlement
       vendor: "{{vendor}}"
       company_code: "{{company_code}}"
       purchasing_org: "{{purchasing_org}}"
@@ -158,15 +167,27 @@ steps:
     output: settlement_number
     on_error: ai_diagnose
 
-  - id: confirm_and_invoice
-    action: srm_operation
+  - id: confirm_settlement
+    action: srm_confirm_settlement
+    requires_approval: true
+    approval_reason: Confirming SRM settlement changes business state and must be reviewed before invoice generation.
     params:
-      operation: confirmAndGenerateInvoice
+      settlement_id: "{{settlement_number}}"
+    output: settlement_confirmation
+    on_error: ai_diagnose
+
+  - id: generate_invoice
+    action: srm_generate_invoice
+    requires_approval: true
+    approval_reason: Generating an SAP estimated invoice changes business state and must be reviewed after settlement confirmation.
+    params:
       settlement_number: "{{settlement_number}}"
+      invoice_date: "{{invoice_date}}"
+      posting_date: "{{posting_date}}"
+      base_date: "{{base_date}}"
     output: sap_invoice_number
     on_error: ai_diagnose
 
-  # ===== Phase 6: 验证 =====
   - id: verify_result
     action: screenshot
     params:

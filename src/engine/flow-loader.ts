@@ -164,8 +164,8 @@ function validateFlowSteps(
   if (flow.metadata?.risk === 'irreversible' && !hasApprovalGate) {
     addIssue('error', 'steps', 'Irreversible flows must include at least one requires_approval step.')
   }
-  if (hasApprovalGate && flow.metadata?.risk && flow.metadata.risk !== 'irreversible') {
-    addIssue('warning', 'metadata.risk', 'Flow has approval gates but metadata.risk is not irreversible.')
+  if (hasApprovalGate && (flow.metadata?.risk === 'read_only' || flow.metadata?.risk === 'simulated_change')) {
+    addIssue('warning', 'metadata.risk', 'Flow has approval gates but metadata.risk is lower than reversible_change.')
   }
 
   flow.steps.forEach((step, index) => {

@@ -39,6 +39,12 @@ export interface CreateSettlementParams {
   externalAgent: string
 }
 
+export interface UploadPOScanParams {
+  vendor: string
+  poNumber: string
+  filePath: string
+}
+
 export interface ConfirmInvoiceParams {
   settlementNumber: string
   invoiceDate: string
@@ -49,7 +55,7 @@ export interface ConfirmInvoiceParams {
 
 export interface SapSrmAdapter {
   srmQuerySettlementStatus(params: SrmQuerySettlementStatusParams): Promise<SrmQuerySettlementStatusResult>
-  uploadPOScan(vendor: string, poNumber: string, filePath: string): Promise<unknown>
+  uploadPOScan(params: UploadPOScanParams): Promise<unknown>
   createSettlement(params: CreateSettlementParams): Promise<unknown>
   confirmSettlement(params: SrmConfirmSettlementParams): Promise<SrmConfirmSettlementResult>
   generateInvoice(params: SrmGenerateInvoiceParams): Promise<SrmGenerateInvoiceResult>
@@ -75,8 +81,8 @@ export class DefaultSapSrmAdapter implements SapSrmAdapter {
     return await this.querySettlementStatusPage.readSuccessEvidence(params)
   }
 
-  async uploadPOScan(vendor: string, poNumber: string, filePath: string): Promise<unknown> {
-    return await this.srmPage.uploadPOScan(vendor, poNumber, filePath)
+  async uploadPOScan(params: UploadPOScanParams): Promise<unknown> {
+    return await this.srmPage.uploadPOScan(params.vendor, params.poNumber, params.filePath)
   }
 
   async createSettlement(params: CreateSettlementParams): Promise<unknown> {
