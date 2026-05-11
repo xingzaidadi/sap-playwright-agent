@@ -103,8 +103,10 @@ describe('flow-loader', () => {
         'goods-return',
         'query-po-history',
         'release-po',
+        'srm-confirm-settlement',
         'srm-create-settlement',
         'srm-generate-invoice',
+        'srm-query-settlement-status',
         'srm-upload-po-scan',
         'verify-invoice',
         'view-goods-receipt',
@@ -114,6 +116,33 @@ describe('flow-loader', () => {
         const result = validateFlowContract(loadFlow(flowName))
         expect(result.errors, `${flowName}: ${JSON.stringify(result.errors)}`).toHaveLength(0)
       }
+    })
+
+    it('should prevent production SRM flows from using retired srm_operation wrappers', () => {
+      const flowNames = [
+        'full-procurement-settlement',
+        'srm-confirm-settlement',
+        'srm-create-settlement',
+        'srm-generate-invoice',
+        'srm-query-settlement-status',
+        'srm-upload-po-scan',
+      ]
+      const retiredOperations = new Set([
+        'confirmAndGenerateInvoice',
+        'uploadPOScan',
+      ])
+
+      const retiredUsages = flowNames.flatMap(flowName => {
+        const flow = loadFlow(flowName)
+        return flow.steps
+          .filter(step =>
+            step.action === 'srm_operation'
+            && retiredOperations.has(String(step.params?.operation ?? ''))
+          )
+          .map(step => `${flowName}.${step.id}:${step.params?.operation}`)
+      })
+
+      expect(retiredUsages).toEqual([])
     })
 
     it('should require approval gates for irreversible flows', () => {
