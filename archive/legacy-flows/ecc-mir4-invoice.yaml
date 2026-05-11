@@ -1,0 +1,67 @@
+name: ecc-mir4-invoice
+description: ECC MIR4 发票凭证查看 + 过账
+
+params:
+  - name: invoice_no
+    type: string
+    required: true
+    description: 发票凭证编号 (如 5105667061)
+  - name: fiscal_year
+    type: string
+    required: true
+    description: 财年 (如 2026)
+
+steps:
+  - id: enter_tcode
+    action: tcode
+    params:
+      code: /nMIR4
+
+  - id: fill_invoice_no
+    action: fill_label_field
+    params:
+      label: 发票凭证编号
+      value: "{{invoice_no}}"
+
+  - id: fill_fiscal_year
+    action: fill_label_field
+    params:
+      label: 财年
+      value: "{{fiscal_year}}"
+
+  - id: display_document
+    action: click_text
+    params:
+      text: 显示凭证
+      force: true
+
+  - id: wait_load
+    action: wait
+    params:
+      ms: "8000"
+
+  - id: switch_to_edit
+    action: keyboard
+    params:
+      key: F7
+
+  - id: wait_edit
+    action: wait
+    params:
+      ms: "5000"
+
+  - id: post_invoice
+    action: click_text
+    params:
+      text: 过账
+      force: true
+
+  - id: wait_post
+    action: wait
+    params:
+      ms: "8000"
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: ecc-mir4-posted

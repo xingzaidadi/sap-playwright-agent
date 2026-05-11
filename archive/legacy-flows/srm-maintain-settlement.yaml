@@ -1,0 +1,96 @@
+name: srm-maintain-settlement
+description: SRM 维护结算对账单（销方税号 + 补充发票信息 + 提交财务审核）
+
+params:
+  - name: settlement_id
+    type: string
+    required: true
+    description: 对账单号（96开头）
+  - name: invoice_no
+    type: string
+    required: true
+    description: 发票号码
+
+steps:
+  - id: navigate_maintain
+    action: srm_navigate
+    params:
+      menu: 维护结算对账单
+
+  - id: query_settlement
+    action: fill_and_query
+    params:
+      field: 对帐单单号
+      value: "{{settlement_id}}"
+      button: 查询 强调
+
+  - id: select_row
+    action: click_text
+    params:
+      text: "{{settlement_id}}"
+      nth: 1
+
+  - id: get_tax_number
+    action: click_button
+    params:
+      button: 维护销方税号
+
+  - id: extract_tax
+    action: extract_text
+    params:
+      field: 销方税号 必需
+    output: seller_tax_no
+
+  - id: cancel_dialog
+    action: click_button
+    params:
+      button: 取消
+
+  - id: call_api_update
+    action: api_call
+    params:
+      method: updateInvoiceInfo
+      args:
+        settlementId: "{{settlement_id}}"
+        sellerTaxNo: "{{seller_tax_no}}"
+
+  - id: select_row_again
+    action: click_text
+    params:
+      text: "{{settlement_id}}"
+      nth: 1
+
+  - id: supplement_invoice
+    action: click_button
+    params:
+      button: 补充发票信息
+
+  - id: query_invoice
+    action: click_button
+    params:
+      button: 查询发票 强调
+
+  - id: select_invoice
+    action: click_text
+    params:
+      text: "{{invoice_no}}"
+
+  - id: confirm_invoice
+    action: click_button
+    params:
+      button: 确定 强调
+
+  - id: submit_review
+    action: click_button
+    params:
+      button: 提交财务审核 强调
+
+  - id: final_confirm
+    action: click_button
+    params:
+      button: 确定 强调
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: srm-settlement-maintained

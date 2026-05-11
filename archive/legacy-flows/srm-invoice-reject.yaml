@@ -1,0 +1,54 @@
+name: srm-invoice-reject
+description: SRM 发票审核与同步 → 发票驳回
+
+params:
+  - name: settlement_id
+    type: string
+    required: true
+    description: 对账单号（96开头）
+
+steps:
+  - id: navigate_manage
+    action: srm_navigate
+    params:
+      menu: 管理对账单
+
+  - id: query_settlement
+    action: fill_and_query
+    params:
+      field: 对账单单号
+      value: "{{settlement_id}}"
+      button: 查询 强调
+
+  - id: select_row
+    action: click_text
+    params:
+      text: "{{settlement_id}}"
+      nth: 1
+
+  - id: invoice_review
+    action: click_button
+    params:
+      button: 发票审核与同步
+
+  - id: wait_review
+    action: wait
+    params:
+      ms: "3000"
+
+  - id: invoice_reject
+    action: click_button
+    params:
+      button: 发票驳回
+
+  - id: handle_reject_dialog
+    action: handle_dialog
+    params:
+      match_text: 驳回
+      select_dropdown: first_non_empty
+      submit_button: 确定
+
+  - id: screenshot_result
+    action: screenshot
+    params:
+      name: srm-invoice-rejected
