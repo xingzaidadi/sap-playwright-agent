@@ -1,6 +1,8 @@
-# 别再手写第一版脚本：用录制把 SOP 编译成 Flow + Adapter
+# 第一版自动化脚本不该手写：Recording Pack 如何把 SOP 编译成可执行 Flow
 
 > 一句话结论：录制能力不应该走传统 RPA 的“录制即回放”，而应该成为通用 Web 自动化框架的采集层：把 SOP、图文、人工操作、trace、截图和 a11y tree 编译成 Flow、Action、Adapter 和 Page Object 草稿。
+
+配图建议：`articles-publish/diagrams/08-capture-not-playback.html`、`articles-publish/diagrams/08-recording-pack-v1-cli.html`
 
 前面几篇已经讲清楚了执行层：
 
@@ -20,15 +22,15 @@ Flow Engine
 
 如果答案只是“看 SOP 手写”，那它还不够像一个通用框架。
 
-所以我认为下一阶段必须补一个能力：
+所以我做了一个采集层：
 
 ```text
-Recorder / Capture Layer
+Recorder / Capture Layer（V1 已实现）
 ```
 
-注意，我说的不是传统 RPA 的录制回放。
+注意，这不是传统 RPA 的录制回放。
 
-我要的是：
+它的核心是：
 
 ```text
 录制采集 + 自动化编译。
@@ -45,7 +47,7 @@ Recorder / Capture Layer
 - 手工调试。
 - 代码沉淀。
 
-这条路已经能支撑第一个 SAP 样例，但它有明显问题：
+这条路支撑了第一个 SAP 样例，但问题也很明显：
 
 | 问题 | 后果 |
 |---|---|

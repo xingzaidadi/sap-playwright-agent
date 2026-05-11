@@ -1,4 +1,4 @@
-# 为什么 SAP 是最好的压力测试：iframe、readonly 和动态控件逼出的 Adapter 层
+# iframe 套三层、ID 每次变、输入框是 readonly：SAP WebGUI 如何逼出 Adapter 架构
 
 > 一句话结论：SAP WebGUI 不是通用框架的边界，而是第一块压力测试样例。它把 iframe、动态 ID、readonly 输入、Tab 校验、加载等待、弹窗和事务记忆状态这些复杂问题集中暴露出来，逼着框架必须设计出 Adapter 层。
 
@@ -32,15 +32,15 @@ Adapter 的价值就是把系统差异从 Flow 和 Runtime 里隔离出来。
 
 ## 项目背景
 
-当前 SAP Adapter 的工程证据：
+当前 SAP Adapter 的工程证据不是一张静态行数表，而是一组已经沉淀进框架的能力：
 
-| 指标 | 数值 |
-|---|---:|
-| TypeScript 源码 | 3,883 行 |
-| YAML Flow | 10 个 |
-| Page Object | 8 个 |
-| 单元测试 | 18 个，全绿 |
-| 开发周期 | 约 2 周 |
+| 维度 | 证据 |
+|---|---|
+| Flow | 用 YAML 描述 SAP 业务步骤，而不是把页面细节写进流程 |
+| Page Object | 封装 iframe、readonly 输入、Tab 校验、消息栏和事务状态 |
+| Adapter | 把 SAP 特有操作收敛成业务级方法 |
+| Report / Trace | 失败时能留下截图、trace 和步骤记录 |
+| 回归测试 | 覆盖 action、adapter、capability、flow-loader 等关键路径 |
 
 项目里最有价值的不是“跑通了一次”，而是踩完坑后沉淀出了一套 Adapter 规则。下面这些问题，都是实际做 SAP WebGUI 自动化时遇到的。
 

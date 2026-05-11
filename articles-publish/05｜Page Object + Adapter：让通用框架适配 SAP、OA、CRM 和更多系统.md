@@ -1,4 +1,4 @@
-# Page Object + Adapter：让通用框架适配 SAP、OA、CRM 和更多系统
+# Page Object 封装页面，Adapter 隔离系统：通用 Web 自动化的分层实战
 
 > 一句话结论：通用 Web 自动化框架真正难的不是“能不能点击页面”，而是如何把不同系统的页面差异隔离起来。Page Object 是实现手段，Adapter 是架构边界。
 

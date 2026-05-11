@@ -1,6 +1,8 @@
-# Page Object 不是银弹：通用 Web 自动化框架的 Adapter 踩坑经验
+# 我把所有逻辑塞进 Page Object 然后后悔了：Adapter-first 踩坑实录
 
 > 一句话结论：Page Object 是很好的页面封装方式，但不是通用 Web 自动化框架的最高抽象。真正稳定的做法是 **Adapter-first，Page Object-inside**：Adapter 是系统接入边界，Page Object 是 Adapter 内部实现。
+
+配图建议：`articles-publish/diagrams/07-adapter-first-page-object-inside.html`
 
 我一开始也很自然地想到 Page Object。
 

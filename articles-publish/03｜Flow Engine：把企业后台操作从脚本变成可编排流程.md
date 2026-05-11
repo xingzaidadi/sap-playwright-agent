@@ -1,6 +1,8 @@
-# Flow Engine：把企业后台操作从脚本变成可编排流程
+# 脚本跑完就丢了？用 YAML Flow Engine 把企业后台操作变成可复用资产
 
 > 一句话结论：通用 Web 自动化框架的核心不是“写更多脚本”，而是把一次次浏览器操作沉淀成可参数化、可组合、可 dry-run、可报告的 Flow。脚本解决一次执行，Flow Engine 解决长期维护。
+
+配图建议：`articles-publish/diagrams/03-flow-engine-pipeline.html`
 
 前两篇讲了两件事：
 

@@ -1,6 +1,8 @@
-# Action Registry：让一个 Flow Engine 调用 SAP、OA、CRM 的关键设计
+# 一套 Flow 调 SAP、OA、CRM：Action Registry 的路由设计
 
 > 一句话结论：Flow Engine 不应该直接知道 SAP、OA、CRM 怎么操作页面。它只应该认识 action。Action Registry 负责把 `query_po_history`、`approve_current_task` 这类领域动作路由到对应 Adapter。
+
+配图建议：`articles-publish/diagrams/04-action-registry-routing.html`
 
 上一篇讲了 Flow Engine：把企业后台操作从脚本变成可编排流程。
 
