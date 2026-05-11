@@ -4,3 +4,11 @@ screenshots/
 .env
 *.tsbuildinfo
 docs/
+
+# Local sensitive experiment scripts and backups. Keep these on the machine only.
+src/query-po-type.ts
+src/run-full-flow.ts.bak
+src/sap/operations/full-settlement-flow.ts.bak
+src/sap/operations/playwright-atomic-workshop.ts
+src/sap/operations/srm-settlement-ops.ts.bak
+src/sap/operations/toolskit-data-api.ts.bak
